@@ -155,7 +155,7 @@ apiSearchRouter.get('/api-powered-search-file/downloads/:downloadId/file', async
     const all = await listDownloads();
     const d = all.find(x => x.downloadId === req.params.downloadId);
     if (!d) return res.status(404).json({ error: 'NotFound', message: 'Download not found' });
-    res.setHeader('Content-Disposition', `attachment; filename=\"${d.filename}\"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${d.filename}"`);
     res.sendFile(path.resolve(d.path));
   } catch (e) { next(e); }
 });

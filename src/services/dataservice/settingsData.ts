@@ -32,14 +32,14 @@ export async function getSettings(): Promise<Settings> {
     sheetName: map.get('sheetName'),
     sheetId: map.get('sheetId'),
   };
-  return { ...envDefaults, ...Object.fromEntries(Object.entries(fromCsv).filter(([_, v]) => v != null)) } as Settings;
+  return { ...envDefaults, ...Object.fromEntries(Object.entries(fromCsv).filter((entry) => entry[1] != null)) } as Settings;
 }
 
 export async function saveSettings(input: Partial<Settings>): Promise<Settings> {
   const current = await getSettings();
   const next: Settings = { ...current, ...input };
   const rows: Row[] = Object.entries(next)
-    .filter(([_, v]) => v !== undefined)
+    .filter((entry) => entry[1] !== undefined)
     .map(([key, value]) => ({ key, value: String(value) }));
   await writeCsv(FILE, [...HEADERS], rows as any);
   return next;

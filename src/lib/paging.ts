@@ -12,7 +12,7 @@ export function paginate<T>(allItems: T[], query: PagingQuery, sortKey?: keyof T
   const page = Math.max(1, Number(query.page) || 1);
   const pageSizeRaw = Number(query.pageSize) || 20;
   const pageSize = Math.min(Math.max(1, pageSizeRaw), 100);
-  let items = [...allItems];
+  const items = [...allItems];
   if (sortKey) {
     const order = (query.order === 'desc' ? 'desc' : 'asc');
     items.sort((a: any, b: any) => {
