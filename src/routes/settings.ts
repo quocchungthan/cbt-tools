@@ -5,6 +5,24 @@ import { validate } from '../middleware/validate';
 
 export const settingsRouter = Router();
 
+/**
+ * @openapi
+ * /settings/:
+ *   get:
+ *     tags: [settings]
+ *     summary: Get settings
+ *     responses:
+ *       200:
+ *         description: Settings
+ *   put:
+ *     tags: [settings]
+ *     summary: Update settings
+ *     requestBody:
+ *       required: true
+ *     responses:
+ *       200:
+ *         description: Settings
+ */
 settingsRouter.get('/settings/', async (_req, res, next) => {
   try {
     const data = await getSettings();

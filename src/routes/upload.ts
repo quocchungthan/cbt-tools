@@ -13,6 +13,47 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 export const uploadRouter = Router();
 
+/**
+ * @openapi
+ * /upload/:
+ *   post:
+ *     tags: [upload]
+ *     summary: Upload file
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Created
+ *   get:
+ *     tags: [upload]
+ *     summary: List uploads
+ *     responses:
+ *       200:
+ *         description: List
+ * /upload/{id}:
+ *   get:
+ *     tags: [upload]
+ *     summary: Get upload by id
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Upload
+ *       404:
+ *         description: Not found
+ */
 uploadRouter.post('/upload/', upload.single('file'), async (req, res, next) => {
   try {
     const file = req.file;
