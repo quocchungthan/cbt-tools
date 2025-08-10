@@ -9,6 +9,15 @@ import { settingsRouter } from './routes/settings';
 import { uploadRouter } from './routes/upload';
 import { errorHandler } from './middleware/errorHandler';
 import { mountSwagger } from './config/swagger';
+import { convertMarkdownRouter } from './routes/convertMarkdown';
+import { contentBreakdownRouter } from './routes/contentBreakdown';
+import { translateRouter } from './routes/translate';
+import { composeRouter } from './routes/compose';
+import { epubRouter } from './routes/epub';
+import { mailRouter } from './routes/mail';
+import { ordersRouter } from './routes/orders';
+import { thirdPartiesRouter } from './routes/thirdParties';
+import { apiSearchRouter } from './routes/apiPoweredSearch';
 
 export function createApp() {
   const app = express();
@@ -32,6 +41,15 @@ export function createApp() {
   api.use(healthRouter);
   api.use(settingsRouter);
   api.use(uploadRouter);
+  api.use(convertMarkdownRouter);
+  api.use(contentBreakdownRouter);
+  api.use(translateRouter);
+  api.use(composeRouter);
+  api.use(epubRouter);
+  api.use(mailRouter);
+  api.use(ordersRouter);
+  api.use(thirdPartiesRouter);
+  api.use(apiSearchRouter);
 
   app.use('/api', api);
 
