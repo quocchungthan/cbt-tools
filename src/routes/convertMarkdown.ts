@@ -50,7 +50,7 @@ export const convertMarkdownRouter = Router();
 const postSchema = z.object({
   uploadId: z.string(),
   command: z.string().optional(),
-  options: z.record(z.any()).optional(),
+  options: z.record(z.string(), z.any()).optional(),
 });
 
 convertMarkdownRouter.post('/convert-markdown/jobs', validate({ body: postSchema }), async (req, res, next) => {

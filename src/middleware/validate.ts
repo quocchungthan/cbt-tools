@@ -1,18 +1,21 @@
-import { AnyZodObject, ZodError } from 'zod';
+import { ZodTypeAny, ZodError } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../lib/errors';
 
-export function validate(schema: { body?: AnyZodObject; query?: AnyZodObject; params?: AnyZodObject }) {
+export function validate(schema: { body?: ZodTypeAny; query?: ZodTypeAny; params?: ZodTypeAny }) {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
       if (schema.body) {
-        req.body = schema.body.parse(req.body);
+        const parsed = schema.body.parse(req.body);
+        req.body = parsed;
       }
       if (schema.query) {
-        req.query = schema.query.parse(req.query);
+        // Validate only; do not reassign to avoid type mismatch
+        schema.query.parse(req.query);
       }
       if (schema.params) {
-        req.params = schema.params.parse(req.params);
+        // Validate only; do not reassign to avoid type mismatch
+        schema.params.parse(req.params);
       }
       next();
     } catch (e) {

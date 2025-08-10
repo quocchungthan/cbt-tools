@@ -98,7 +98,7 @@ thirdPartiesRouter.get('/third-parites/partners', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-const partnerBody = z.object({ type: z.enum(['print','ads','bookshelf','shipping']), name: z.string(), endpoint: z.string().optional(), config: z.record(z.any()).optional(), contact: z.string().optional() });
+const partnerBody = z.object({ type: z.enum(['print','ads','bookshelf','shipping']), name: z.string(), endpoint: z.string().optional(), config: z.record(z.string(), z.any()).optional(), contact: z.string().optional() });
 
 thirdPartiesRouter.post('/third-parites/partners', validate({ body: partnerBody }), async (req, res, next) => {
   try {
