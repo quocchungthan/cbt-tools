@@ -712,3 +712,62 @@ Third-parties `/tools/third-parites management`
 - Start backend locally exposing `/api/docs-json`.
 - Run `pnpm contracts:generate` to refresh `packages/contracts/src/types.ts` and client.
 - Run UI with `pnpm dev` and verify typed endpoints compile.
+
+## Epic E15 — API-powered Search File UI (`/tools/api-powered-search-file`)
+
+Goal
+- Provide a UI to search for book PDFs/EPUBs by name using the backend OpenAI-powered search endpoints, with order-based suggestions, language preferences (en/vi), ranked results (free first, then lowest price), and file downloads.
+
+Tickets
+- E15-01 Page scaffold and routing [size:S]
+  - Create route `/tools/api-powered-search-file` with page layout (header, search form, results panel)
+  - Acceptance: Route reachable from Tools; basic layout present
+- E15-02 Contracts integration [size:S]
+  - Import `@contracts` methods for: create search, list searches, get search by id, list results, create download, get download file
+  - Acceptance: Type-safe calls available in a feature-scoped service
+- E15-03 Search form with order suggestions [size:M]
+  - Inputs: book name (text with autocomplete), order selector (optional), requestedLangs (multi-select, default en+vi), maxResults (default 10)
+  - If order is selected and book name empty, derive name from order
+  - Acceptance: Form validation; submit disabled until valid
+- E15-04 Start search and job list [size:M]
+  - On submit, POST `/api/api-powered-search-file/search`
+  - Show toast on enqueue; auto-select the new search; show paged list of recent searches with status
+  - Acceptance: New search appears in list; pagination controls wired to query params
+- E15-05 Results table and ranking view [size:M]
+  - For selected searchId, GET `/api/api-powered-search-file/results` with paging; default sort by rank asc; group badges: Free/Paid, language, fileType
+  - Columns: rank, title, url (ellipsis+copy), language, price (Free or currency), actions (Download)
+  - Acceptance: Sorting and paging stable; free results surface first when sorting by default
+- E15-06 Download action [size:S]
+  - Click Download: POST `/api/api-powered-search-file/downloads` then trigger GET `/api/api-powered-search-file/downloads/:downloadId/file` to save file
+  - Acceptance: Browser download starts; error handling shown on failure
+- E15-07 UX polish and accessibility [size:S]
+  - Loading states (skeletons), error toasts, empty states, keyboard navigation, focus order, labels
+  - Acceptance: Axe checks pass; tab order verified
+- E15-08 Tests [size:M]
+  - Component tests for form validation and table rendering
+  - Integration test mocking API client for submit/list/results/download
+  - E2E happy path: start search, view results, download
+
+State and URL
+- Persist selected searchId, page, pageSize, sort, order in query params for deep linking
+
+Error handling
+- Show actionable errors for unsupported file types or missing searchId; allow retry
+
+Performance
+- Use paged queries; debounce search form suggestions; avoid re-fetch loops on query changes
+
+Dependencies
+- Contracts package ready (C1–C3)
+- Orders endpoints for suggestions
+
+## UI consumption mapping by feature (endpoints used) — Addendum
+
+API-powered Search File `/tools/api-powered-search-file`
+- POST `/api/api-powered-search-file/search`
+- GET `/api/api-powered-search-file/searches` (paged list)
+- GET `/api/api-powered-search-file/searches/:searchId`
+- GET `/api/api-powered-search-file/results` (paged list, requires `searchId`)
+- POST `/api/api-powered-search-file/downloads`
+- GET `/api/api-powered-search-file/downloads` (paged list)
+- GET `/api/api-powered-search-file/downloads/:downloadId/file`
