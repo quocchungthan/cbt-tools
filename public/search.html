@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>API-powered Search - CBT Tools</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
+      a { color: #0366d6; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .grid { display: grid; gap: 1rem; }
+      .card { border: 1px solid #e1e4e8; border-radius: 8px; padding: 1rem; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { text-align: left; padding: .5rem; border-bottom: 1px solid #e1e4e8; }
+      input, select, button { padding: .5rem; }
+    </style>
+  </head>
+  <body>
+    <p><a href="/">← Back</a></p>
+    <h1>API-powered Search</h1>
+    <div class="grid">
+      <div class="card">
+        <form id="create-form">
+          <label>Book Name <input name="bookName" /></label>
+          <label>Order ID <input name="orderId" /></label>
+          <label>Requested Langs
+            <select name="langs" multiple size="2"><option value="en">en</option><option value="vi">vi</option></select>
+          </label>
+          <label>Max Results <input type="number" name="maxResults" min="1" max="50" value="10" /></label>
+          <button type="submit">Create Search</button>
+          <span id="status"></span>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Searches</h3>
+        <button id="refresh-searches">Refresh</button>
+        <table>
+          <thead><tr><th>ID</th><th>Query</th><th>Source</th><th>Langs</th><th>Status</th><th>Created</th></tr></thead>
+          <tbody id="searches"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Results</h3>
+        <form id="results-load">
+          <label>Search ID <input name="searchId" required /></label>
+          <button type="submit">Load Results</button>
+        </form>
+        <table>
+          <thead><tr><th>ID</th><th>Title</th><th>URL</th><th>Type</th><th>Lang</th><th>Free</th><th>Price</th><th>Rank</th><th></th></tr></thead>
+          <tbody id="results"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Downloads</h3>
+        <button id="refresh-downloads">Refresh</button>
+        <table>
+          <thead><tr><th>ID</th><th>Result</th><th>Filename</th><th>Path</th><th>Created</th><th>File</th></tr></thead>
+          <tbody id="downloads"></tbody>
+        </table>
+      </div>
+    </div>
+    <script>
+      async function listSearches() {
+        const res = await fetch('/api/api-powered-search-file/searches');
+        const data = await res.json();
+        document.getElementById('searches').innerHTML = (data.items||[]).map(s => `<tr><td>${s.searchId}</td><td>${s.query}</td><td>${s.source}</td><td>${(s.requestedLangs||[]).join(', ')}</td><td>${s.status}</td><td>${new Date(s.createdAt).toLocaleString()}</td></tr>`).join('');
+      }
+      async function listResults(searchId) {
+        const res = await fetch('/api/api-powered-search-file/results?searchId=' + encodeURIComponent(searchId));
+        const data = await res.json();
+        document.getElementById('results').innerHTML = (data.items||[]).map(r => `<tr><td>${r.resultId}</td><td>${r.title}</td><td><a href='${r.url}' target='_blank'>link</a></td><td>${r.fileType}</td><td>${r.language}</td><td>${r.isFree}</td><td>${r.priceCents||''}</td><td>${r.rank}</td><td><button class='dl' data-id='${r.resultId}'>Download</button></td></tr>`).join('');
+        document.querySelectorAll('.dl').forEach(btn => btn.addEventListener('click', async (e) => {
+          const resultId = e.target.getAttribute('data-id');
+          const res = await fetch('/api/api-powered-search-file/downloads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resultId }) });
+          if (!res.ok) { alert('Download create failed'); return; }
+          await listDownloads();
+        }));
+      }
+      async function listDownloads() {
+        const res = await fetch('/api/api-powered-search-file/downloads');
+        const data = await res.json();
+        document.getElementById('downloads').innerHTML = (data.items||[]).map(d => `<tr><td>${d.downloadId}</td><td>${d.resultId}</td><td>${d.filename}</td><td>${d.path}</td><td>${new Date(d.createdAt).toLocaleString()}</td><td><a href="/api/api-powered-search-file/downloads/${d.downloadId}/file" target="_blank">file</a></td></tr>`).join('');
+      }
+      document.getElementById('refresh-searches').addEventListener('click', listSearches);
+      document.getElementById('refresh-downloads').addEventListener('click', listDownloads);
+      document.getElementById('create-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const langs = Array.from(e.target.querySelector('[name=langs]').selectedOptions).map(o=>o.value);
+        const body = { bookName: fd.get('bookName')||undefined, orderId: fd.get('orderId')||undefined, requestedLangs: langs.length?langs:undefined, maxResults: Number(fd.get('maxResults'))||undefined };
+        document.getElementById('status').textContent = 'Creating…';
+        try {
+          const res = await fetch('/api/api-powered-search-file/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          if (!res.ok) throw new Error('Create failed');
+          await res.json();
+          document.getElementById('status').textContent = 'Created';
+          await listSearches();
+        } catch (err) {
+          document.getElementById('status').textContent = '';
+          alert(err.message || 'Error creating search');
+        }
+      });
+      document.getElementById('results-load').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = new FormData(e.target).get('searchId');
+        await listResults(id);
+      });
+      listSearches();
+      listDownloads();
+    </script>
+  </body>
+</html>

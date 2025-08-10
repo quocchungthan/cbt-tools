@@ -18,6 +18,7 @@ import { mailRouter } from './routes/mail';
 import { ordersRouter } from './routes/orders';
 import { thirdPartiesRouter } from './routes/thirdParties';
 import { apiSearchRouter } from './routes/apiPoweredSearch';
+import path from 'node:path';
 
 export function createApp() {
   const app = express();
@@ -52,6 +53,14 @@ export function createApp() {
   api.use(apiSearchRouter);
 
   app.use('/api', api);
+
+  // Serve static frontend
+  const publicDir = path.resolve(process.cwd(), 'public');
+  app.use(express.static(publicDir));
+
+  app.get('/', (_req, res) => {
+    res.sendFile(path.join(publicDir, 'index.html'));
+  });
 
   app.use(errorHandler);
 

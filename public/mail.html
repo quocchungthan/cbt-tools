@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mail - CBT Tools</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
+      a { color: #0366d6; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .card { border: 1px solid #e1e4e8; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { text-align: left; padding: .5rem; border-bottom: 1px solid #e1e4e8; }
+      input, select, button { padding: .5rem; }
+    </style>
+  </head>
+  <body>
+    <p><a href="/">← Back</a></p>
+    <h1>Send Mail</h1>
+    <div class="card">
+      <form id="create-form">
+        <label>Email <input type="email" name="email" required /></label>
+        <label>Template
+          <select name="template">
+            <option value="thank-you">thank-you</option>
+            <option value="delay">delay</option>
+            <option value="book-ready">book-ready</option>
+          </select>
+        </label>
+        <label>EPUB Path (optional)
+          <input name="epubPath" placeholder="database/epubs/.../output.epub" />
+        </label>
+        <button type="submit">Queue Mail</button>
+        <span id="status"></span>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Mail Jobs</h3>
+      <button id="refresh-jobs">Refresh</button>
+      <table>
+        <thead><tr><th>Job ID</th><th>Email</th><th>Template</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody id="jobs"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Known Emails</h3>
+      <form id="emails-form">
+        <input name="q" placeholder="search prefix" />
+        <button type="submit">Search</button>
+      </form>
+      <table>
+        <thead><tr><th>Email</th><th>Last Used</th><th>Count</th></tr></thead>
+        <tbody id="emails"></tbody>
+      </table>
+    </div>
+    <script>
+      async function listJobs() {
+        const res = await fetch('/api/send-mail/jobs');
+        const data = await res.json();
+        document.getElementById('jobs').innerHTML = (data.items||[]).map(j => `<tr><td>${j.jobId}</td><td>${j.email}</td><td>${j.template}</td><td>${j.status}</td><td>${new Date(j.createdAt).toLocaleString()}</td></tr>`).join('');
+      }
+      async function listEmails(q) {
+        const res = await fetch('/api/send-mail/emails' + (q?`?q=${encodeURIComponent(q)}`:''));
+        const data = await res.json();
+        document.getElementById('emails').innerHTML = (data.items||[]).map(e => `<tr><td>${e.email}</td><td>${new Date(e.lastUsedAt).toLocaleString()}</td><td>${e.count}</td></tr>`).join('');
+      }
+      document.getElementById('refresh-jobs').addEventListener('click', listJobs);
+      document.getElementById('create-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const body = Object.fromEntries(fd.entries());
+        if (!body.epubPath) delete body.epubPath;
+        document.getElementById('status').textContent = 'Queuing…';
+        try {
+          const res = await fetch('/api/send-mail/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          if (!res.ok) throw new Error('Create failed');
+          await res.json();
+          document.getElementById('status').textContent = 'Queued';
+          await listJobs();
+        } catch (err) {
+          document.getElementById('status').textContent = '';
+          alert(err.message || 'Error queuing mail');
+        }
+      });
+      document.getElementById('emails-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const q = new FormData(e.target).get('q');
+        listEmails(q);
+      });
+      listJobs();
+      listEmails();
+    </script>
+  </body>
+</html>

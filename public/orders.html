@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Orders - CBT Tools</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
+      a { color: #0366d6; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .card { border: 1px solid #e1e4e8; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { text-align: left; padding: .5rem; border-bottom: 1px solid #e1e4e8; }
+      input, button { padding: .5rem; }
+    </style>
+  </head>
+  <body>
+    <p><a href="/">← Back</a></p>
+    <h1>Orders</h1>
+    <div class="card">
+      <form id="create-form">
+        <label>Book Name <input name="bookName" required /></label>
+        <label>Author <input name="author" required /></label>
+        <label>Format <input name="format" required placeholder="pdf|epub|..." /></label>
+        <label>User Email <input type="email" name="userEmail" /></label>
+        <label>Original File ID <input name="originalFileId" /></label>
+        <label>Translated File ID <input name="translatedFileId" /></label>
+        <button type="submit">Create Order</button>
+        <span id="status"></span>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Orders</h3>
+      <button id="refresh">Refresh</button>
+      <table>
+        <thead><tr><th>ID</th><th>Book</th><th>Author</th><th>Format</th><th>Email</th><th>Created</th><th></th></tr></thead>
+        <tbody id="orders"></tbody>
+      </table>
+    </div>
+    <script>
+      async function listOrders() {
+        const res = await fetch('/api/order-management/orders');
+        const data = await res.json();
+        document.getElementById('orders').innerHTML = (data.items||[]).map(o => `<tr><td>${o.orderId}</td><td>${o.bookName}</td><td>${o.author}</td><td>${o.format}</td><td>${o.userEmail||''}</td><td>${new Date(o.createdAt).toLocaleString()}</td><td><button data-id='${o.orderId}' class='del'>Delete</button></td></tr>`).join('');
+        document.querySelectorAll('.del').forEach(btn => btn.addEventListener('click', async (e) => {
+          const id = e.target.getAttribute('data-id');
+          if (!confirm('Delete order '+id+'?')) return;
+          const res = await fetch(`/api/order-management/orders/${id}`, { method: 'DELETE' });
+          if (res.ok) listOrders(); else alert('Delete failed');
+        }));
+      }
+      document.getElementById('refresh').addEventListener('click', listOrders);
+      document.getElementById('create-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const body = Object.fromEntries(fd.entries());
+        if (!body.userEmail) delete body.userEmail;
+        if (!body.originalFileId) delete body.originalFileId;
+        if (!body.translatedFileId) delete body.translatedFileId;
+        document.getElementById('status').textContent = 'Creating…';
+        try {
+          const res = await fetch('/api/order-management/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          if (!res.ok) throw new Error('Create failed');
+          await res.json();
+          document.getElementById('status').textContent = 'Created';
+          await listOrders();
+        } catch (err) {
+          document.getElementById('status').textContent = '';
+          alert(err.message || 'Error creating order');
+        }
+      });
+      listOrders();
+    </script>
+  </body>
+</html>

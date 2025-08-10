@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Convert Markdown - CBT Tools</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
+      a { color: #0366d6; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .card { border: 1px solid #e1e4e8; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { text-align: left; padding: .5rem; border-bottom: 1px solid #e1e4e8; }
+      input, select, button { padding: .5rem; }
+    </style>
+  </head>
+  <body>
+    <p><a href="/">← Back</a></p>
+    <h1>Convert Markdown</h1>
+    <div class="card">
+      <form id="create-form">
+        <label>Upload ID <input name="uploadId" required placeholder="paste uploadId" /></label>
+        <label>Command <input name="command" placeholder="optional" /></label>
+        <button type="submit">Create Job</button>
+        <span id="status"></span>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Jobs</h3>
+      <button id="refresh-jobs">Refresh</button>
+      <table>
+        <thead><tr><th>Job ID</th><th>Upload ID</th><th>Status</th><th>Progress</th><th>Created</th></tr></thead>
+        <tbody id="jobs"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Markdown Outputs</h3>
+      <button id="refresh-md">Refresh</button>
+      <table>
+        <thead><tr><th>Job ID</th><th>Markdown ID</th><th>Path</th><th>Created</th></tr></thead>
+        <tbody id="markdowns"></tbody>
+      </table>
+    </div>
+    <script>
+      async function listJobs() {
+        const res = await fetch('/api/convert-markdown/jobs');
+        const data = await res.json();
+        const tbody = document.getElementById('jobs');
+        tbody.innerHTML = (data.items||[]).map(j => `<tr><td>${j.jobId}</td><td>${j.uploadId}</td><td>${j.status}</td><td>${j.progress}</td><td>${new Date(j.createdAt).toLocaleString()}</td></tr>`).join('');
+      }
+      async function listMarkdowns() {
+        const res = await fetch('/api/convert-markdown/markdowns');
+        const data = await res.json();
+        const tbody = document.getElementById('markdowns');
+        tbody.innerHTML = (data.items||[]).map(m => `<tr><td>${m.jobId}</td><td>${m.markdownId}</td><td>${m.path}</td><td>${new Date(m.createdAt).toLocaleString()}</td></tr>`).join('');
+      }
+      document.getElementById('refresh-jobs').addEventListener('click', listJobs);
+      document.getElementById('refresh-md').addEventListener('click', listMarkdowns);
+      document.getElementById('create-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const body = { uploadId: fd.get('uploadId'), command: fd.get('command') || undefined };
+        document.getElementById('status').textContent = 'Creating…';
+        try {
+          const res = await fetch('/api/convert-markdown/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          if (!res.ok) throw new Error('Create failed');
+          await res.json();
+          document.getElementById('status').textContent = 'Created';
+          await listJobs();
+          await listMarkdowns();
+        } catch (err) {
+          document.getElementById('status').textContent = '';
+          alert(err.message || 'Error creating job');
+        }
+      });
+      listJobs();
+      listMarkdowns();
+    </script>
+  </body>
+</html>
