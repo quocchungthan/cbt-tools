@@ -67,6 +67,9 @@ CSV storage and schemas
 - Partners: `partners.csv` — `[partnerId, type, name, endpoint, configJson, contact, createdAt]`
 - Bookshelf: `bookshelf.csv` — `[shelfId, title, composedMarkdownPath, epubPath, orderId, createdAt]`
 - Shipments: `shipments.csv` — `[shipmentId, orderId, partnerId, status, trackingNumber, createdAt]`
+- API-powered search: `api_searches.csv` — `[searchId, query, source('order'|'manual'), requestedLangs(json)?, maxResults, status, createdAt]`
+- API-powered search results: `api_search_results.csv` — `[resultId, searchId, title, url, fileType, language('en'|'vi'|'unknown'), isFree, priceCents?, rank, discoveredAt]`
+- API-powered search downloads: `api_search_downloads.csv` — `[downloadId, resultId, filename, path, mime, size, createdAt]`
 
 Filesystem layout
 - Uploads: `database/uploads/{id}/{originalFilename}`
@@ -74,6 +77,7 @@ Filesystem layout
 - Translated markdown: `database/markdown_translated/{translationId}/{output.md}`
 - Composed markdown: `database/markdown_composed/{jobId}/{output.md}`
 - EPUB outputs: `database/epubs/{jobId}/{output.epub}`
+- API-powered search downloads: `database/search_downloads/{downloadId}/{filename}`
 
 Paging for GET list endpoints
 - Query params: `page` (default 1, min 1), `pageSize` (default 20, max 100), optional `sort` and `order` ('asc'|'desc')
@@ -356,6 +360,57 @@ Third-parties `/api/third-parites/`
   - Filesystem: none
   - Status: 201 / 400
 
+API-powered search file `/api/api-powered-search-file/`
+- POST `/api/api-powered-search-file/search`
+  - Input: body `{ bookName?: string, orderId?: string, requestedLangs?: ('en'|'vi')[], maxResults?: number }` (if `bookName` omitted and `orderId` present, derive name from order; default requestedLangs `['en','vi']`, maxResults 10)
+  - Output: `{ searchId: string, query: string, requestedLangs: string[], maxResults: number, status: 'queued'|'running'|'succeeded'|'failed', createdAt: string }`
+  - CSV: WRITE `api_searches.csv` `[searchId, query, source, requestedLangs(json), maxResults, status, createdAt]`
+  - Filesystem: none
+  - Status: 201 / 400 (no query derivable)
+- GET `/api/api-powered-search-file/searches`
+  - Input: query `page, pageSize, sort?, order?`, optional `status`
+  - Output: paging envelope of `{ searchId, query, source, requestedLangs, maxResults, status, createdAt }`
+  - CSV: READ `api_searches.csv`
+  - Filesystem: none
+  - Status: 200
+- GET `/api/api-powered-search-file/searches/:searchId`
+  - Input: path `searchId`
+  - Output: `{ searchId, query, source, requestedLangs, maxResults, status, createdAt }` or 404
+  - CSV: READ `api_searches.csv`
+  - Filesystem: none
+  - Status: 200 / 404
+- GET `/api/api-powered-search-file/results`
+  - Input: query `searchId` (required), `page, pageSize, sort?, order?`
+  - Output: paging envelope of `{ resultId: string, searchId: string, title: string, url: string, fileType: 'pdf'|'unknown', language: 'en'|'vi'|'unknown', isFree: boolean, priceCents?: number, rank: number, discoveredAt: string }`
+  - CSV: READ `api_search_results.csv`
+  - Filesystem: none
+  - Status: 200 / 400 (missing searchId)
+- POST `/api/api-powered-search-file/downloads`
+  - Input: body `{ resultId: string }`
+  - Output: `{ downloadId: string, resultId: string, filename: string, path: string, mime: string, size: number, createdAt: string }`
+  - CSV: WRITE `api_search_downloads.csv` `[downloadId, resultId, filename, path, mime, size, createdAt]`
+  - Filesystem: download file stored at `database/search_downloads/{downloadId}/{filename}`
+  - Status: 201 / 400 (invalid result or unsupported file type)
+- GET `/api/api-powered-search-file/downloads`
+  - Input: query `page, pageSize, sort?, order?`, optional `searchId`
+  - Output: paging envelope of `{ downloadId, resultId, filename, path, mime, size, createdAt }`
+  - CSV: READ `api_search_downloads.csv`
+  - Filesystem: none
+  - Status: 200
+- GET `/api/api-powered-search-file/downloads/:downloadId/file`
+  - Input: path `downloadId`
+  - Output: file stream with `Content-Disposition` attachment
+  - CSV: READ `api_search_downloads.csv`
+  - Filesystem: read file from `database/search_downloads/{downloadId}/{filename}`
+  - Status: 200 / 404
+
+Notes on ranking criteria
+- Businessservice should use OpenAI-powered web search to discover results for the query and rank as:
+  1) PDF results in English and Vietnamese (requested languages first)
+  2) Free results appear before paid results; among paid, sort by lowest price
+  3) Preserve overall top-k as `maxResults`
+- Persist all discovered results with `rank` reflecting final order
+
 Misc
 - GET `/api/health`
   - Input: none
@@ -387,7 +442,7 @@ Logging and metrics
 
 Swagger
 - Served at `/api/docs`
-- Tags by tool: settings, upload, convert-markdown, content-breakdown, translate, translation-fine-tune, compose, convert-to-epub, send-mail, order-management, third-parites
+- Tags by tool: settings, upload, convert-markdown, content-breakdown, translate, translation-fine-tune, compose, convert-to-epub, send-mail, order-management, third-parites, api-powered-search-file
 - Include component schemas for all models and CSV-backed entities
 
 Docker and deployment
