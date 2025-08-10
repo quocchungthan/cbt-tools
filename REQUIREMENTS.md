@@ -1,6 +1,6 @@
-## Application Design (Angular) — Requirements and Incremental Ticket Plan
+## Frontend UI (Angular) — Plan to Consume Node APIs + Shared Contracts
 
-This document lays out a very detailed, incremental plan to deliver an enterprise-grade Angular application. Work is organized by epics, with individually estimable tickets. Each ticket includes a description, acceptance criteria, dependencies, estimation guidance, and labels. Adjust scope and estimates to match actual team velocity and constraints.
+This document defines the UI-only implementation plan to consume the Node backend defined in `Node-Backend-Swagger.md`. It includes epics/tickets for Angular UI, API integration, pagination, and a shared TypeScript contract model used by both backend and frontend. Backend work is tracked separately; this doc focuses on UI.
 
 ### Global Assumptions
 - **Angular version**: 17+ (standalone APIs, Vite builder, control flow, hydration)
@@ -603,3 +603,112 @@ These tickets establish repeatable patterns for product features. Replace `Entit
 - Targeted browsers and performance SLAs (LCP/INP budgets)
 - Hosting and deployment constraints (static vs SSR node runtime)
 - Data retention, audit, and compliance requirements (PII)
+
+## Shared TypeScript Contracts (Backend <-> Frontend)
+
+Goal
+- Single source of truth for API contracts shared by Node backend and Angular frontend.
+- Generate strongly-typed client and models from the backend OpenAPI at `/api/docs`.
+
+Workspace structure (pnpm workspaces)
+- `packages/contracts/` — generated OpenAPI types and lightweight typed client
+- `apps/frontend/` — Angular app consuming `@contracts` package
+
+Contracts implementation plan
+- Ticket C1: Contracts package scaffold [size:S]
+  - Create `packages/contracts` with tsconfig, build, and publish config (local workspace only)
+  - Add scripts: `generate`, `build`, `lint`
+  - Acceptance: package builds and can be imported from frontend
+- Ticket C2: OpenAPI types generation [size:S]
+  - Use `openapi-typescript` (or `orval`) to generate types from `http://localhost:3000/api/docs-json`
+  - Output to `packages/contracts/src/types.ts`
+  - Acceptance: `types.ts` contains schemas for all endpoints (settings, upload, …)
+- Ticket C3: Typed API client [size:M]
+  - Implement minimal fetch-based client with helpers for paging envelopes and error shape
+  - Endpoints covered: settings, upload, convert-markdown, content-breakdown, translate, translation-fine-tune, compose, convert-to-epub, send-mail, order-management, third-parites
+  - Acceptance: methods typed via generated models; runtime guards for envelopes
+- Ticket C4: CI automation [size:S]
+  - Script to refresh contracts types on backend changes; verify no drift in CI
+  - Acceptance: `pnpm contracts:generate` updates types; frontend compiles
+
+Frontend integration plan
+- Ticket C5: Replace local DTOs with `@contracts` types [size:S]
+  - Use generated `paths`/`components` types for request/response models
+  - Acceptance: no `any` for API models; compile passes
+- Ticket C6: API service wrapper in UI [size:S]
+  - Create thin wrapper delegating to `@contracts` client; add interceptors for auth, base URL, errors
+  - Acceptance: one import surface for UI to call APIs
+
+Notes
+- Alternative approach: code-first with zod schemas shared from backend; export package of schemas and derive OpenAPI. If adopted, adjust C2 to import schemas directly.
+
+## UI consumption mapping by feature (endpoints used)
+
+Settings `/tools`
+- GET `/api/settings/` → load form values
+- PUT `/api/settings/` → save values
+
+Upload `/tools/upload`
+- POST `/api/upload/` (multipart)
+- GET `/api/upload/` (paged list)
+- GET `/api/upload/:id`
+
+Convert Markdown `/tools/convert-markdown`
+- POST `/api/convert-markdown/jobs`
+- GET `/api/convert-markdown/jobs` (paged list)
+- GET `/api/convert-markdown/jobs/:jobId`
+- GET `/api/convert-markdown/markdowns` (paged list)
+
+Content Breakdown `/tools/content-breakdown`
+- POST `/api/content-breakdown/:markdownId`
+- GET `/api/content-breakdown/:markdownId` (paged list)
+
+Translate `/tools/translate`
+- POST `/api/translate/jobs`
+- GET `/api/translate/jobs` (paged list)
+- GET `/api/translate/jobs/:id`
+- GET `/api/translate/markdowns` (paged list)
+
+Translation Fine-tune `/tools/translation-fine-tune`
+- GET `/api/translation-fine-tune/:translationId` (paged list)
+- PUT `/api/translation-fine-tune/:translationId`
+
+Compose `/tools/compose`
+- POST `/api/compose/jobs`
+- GET `/api/compose/jobs` (paged list)
+- GET `/api/compose/jobs/:id`
+- GET `/api/compose/markdowns` (paged list)
+
+Convert to EPUB `/tools/convert-to-epub`
+- POST `/api/convert-to-epub/jobs`
+- GET `/api/convert-to-epub/jobs` (paged list)
+- GET `/api/convert-to-epub/jobs/:id`
+- GET `/api/convert-to-epub/epubs` (paged list)
+
+Send Mail `/tools/send-mail`
+- POST `/api/send-mail/jobs`
+- GET `/api/send-mail/jobs` (paged list)
+- GET `/api/send-mail/emails` (paged list + optional search)
+
+Order Management `/tools/order-management`
+- GET `/api/order-management/orders` (paged list)
+- GET `/api/order-management/orders/:orderId`
+- POST `/api/order-management/orders`
+- PUT `/api/order-management/orders/:orderId`
+- DELETE `/api/order-management/orders/:orderId`
+
+Third-parties `/tools/third-parites management`
+- Partners: GET/POST/PUT/DELETE `/api/third-parites/partners`
+- Bookshelf: GET/POST/DELETE `/api/third-parites/bookshelf`
+- Shipments: GET/POST `/api/third-parites/shipments`
+
+## UI ticket adjustments to use shared contracts
+
+- Update E4-01 (HTTP client utilities) to use `@contracts` client as the default implementation; keep adapters if needed.
+- Update E4-02 (DTOs, mappers, and validation) to rely on generated types for compile-time safety; reserve mappers only for view-model shaping.
+- All list views (E14-02 etc.) must use the paging envelope `{ items, page, pageSize, total, totalPages }` and surface sort/paging controls bound to query params.
+
+## Developer workflow
+- Start backend locally exposing `/api/docs-json`.
+- Run `pnpm contracts:generate` to refresh `packages/contracts/src/types.ts` and client.
+- Run UI with `pnpm dev` and verify typed endpoints compile.
