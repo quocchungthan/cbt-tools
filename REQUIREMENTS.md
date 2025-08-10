@@ -187,3 +187,76 @@ This document defines the architecture, routes, backend/frontend service structu
 - `.gitignore` ignoring `database/`
 
 ---
+
+# Original requirements on Notion:
+| 10/08/2025
+
+By route navigation:
+
+/tools
+
+Update the user preference and settings → From form Send to backend to save in a csv.
+
+Backend having the service to load those settings, if the csv file does not have that, load it from env variables by default
+
+Note for backend: We should have a service implementation (call this `dataservice`) and exposed the interfaces, at the moment that service save and loading the csv (we should have the a `database/` folder at the root directory and .git should ignore this at the moment.) and I’ll try with database later.
+
+Another note for backend then → it’s should be embedded in angular ssr.
+
+in the .env should have the key FILE_SUPPORTED and default value is “.pdf”, the form on UI should include that as well beside open key, open ai model, open ai proj id, open ai org id. sheet api key, sheet name, sheet id, … etc.
+
+/tools/upload
+
+An UI for uploading file, we also have a similar `dataservice` but on another csv, also should have. an interface for replacement later.
+
+that service should generate id for each upload, the file should be placed in `database/` in root dir.
+
+on UI should have a table 
+
+/tools/convert-markdown
+
+UI for input and data table for converting the uploaded file on the first step to markdown. the convert from should have dropdown to select uploaded file.
+
+The data table below to see the command submitted, progress.
+
+backend, also a `dataservice` to save the progress, the output file
+
+the dataservice of this should return the list markdown we already have.
+
+/tools/translate
+
+Here the same logic with other tools but the input is list of original markdown, as a dropdown, user can select the target lang (can be en, vi for now (loaded from the. user setting as in the config (or .env see the first tool)))
+
+The output should be another markdown file that matches the original markdown.
+
+/tools/compose
+
+Where the forminputs are the dropdown to select the markdowns files we have (from the convert and from the translate)
+also need `dataservice` to save and load the progress, input also have t he format of bilingual book (side by side, para by para, sentence by sentence,… (supported format should be in the setting dataservice as the step one.)).
+
+/tools/convert-to-epub
+
+This tool helps to convert the markdowns to epub file. the structure, data saving querying should be the same as the tools above.
+
+the `businessservice` of this tool on backend should be able to return the list of epub to use in the later tool (sending mail)
+
+/tools/send-mail
+
+This tool should load the settings like email config in the user setting from `dataservice` of the first tool
+
+On this tool, I can use 3 options of sending mail with special templates:
+
+- Option one: Thank you user to use our service
+- Option 2: Sorry for the delay
+- Option 3: The book is ready with attached final epub (form input dropdown.)
+
+`dataservice`  of this tool should save the progress, status of each mail send, 
+
+`businessservice` able to return the list of email used. on the form, user can input new mail and a dropdown as suggestions get from list email.
+
+- The record in csv file should have column to ref to the related file (pdf, md, …).
+- `dataservice`s should be different from `businessservice`, business services are the stuff that actually process the file such as (converting, composing, uploading, generate ids, fallback settings,…) `businessservice` are the template holder to implement later.
+- Business/ shared models should be in separated files to re uses, one model per file. one service per file, one data service per file.
+- Document the development preference so the next increment should follow the rule.
+- Theme UI design and color, form controls should look like cursor.com.
+- Top nav have tools, and home, home currently should have nothing, the /tools nav would navigate to the tools page, you can see the routing design above.
