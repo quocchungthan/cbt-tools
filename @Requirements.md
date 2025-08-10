@@ -1,605 +1,373 @@
-## Application Design (Angular) — Requirements and Incremental Ticket Plan
+## Application Design [Angular] — Incremental Ticket Plan (Aligned to Spec)
 
-This document lays out a very detailed, incremental plan to deliver an enterprise-grade Angular application. Work is organized by epics, with individually estimable tickets. Each ticket includes a description, acceptance criteria, dependencies, estimation guidance, and labels. Adjust scope and estimates to match actual team velocity and constraints.
+This plan translates the provided specification into actionable, incremental tickets. It assumes Angular 17+ with SSR, an embedded Node/Express server for APIs, CSV-backed persistence (temporary), and a clear separation between `dataservice` (persistence/IO) and `businessservice` (domain process orchestration). All APIs are prefixed with `/api/tool-name/` and documented via Swagger at `/api/docs`.
 
-### Global Assumptions
-- **Angular version**: 17+ (standalone APIs, Vite builder, control flow, hydration)
-- **Node.js**: 20 LTS
-- **Package manager**: pnpm (or npm/yarn per org standard)
-- **Testing**: Jest (unit/integration) + Playwright (e2e)
-- **Lint/Format**: ESLint + Prettier
-- **CI**: GitHub Actions (or your CI of choice)
-- **UI**: Angular Material + CDK + custom design tokens
-- **State**: NgRx (Store/Effects/Entity/Router-Store) or Signals-based Store (choose per ticket E1-04)
-- **Routing**: Standalone route definitions with lazy-loaded feature areas
-- **Auth**: OIDC or JWT with refresh tokens
-- **Observability**: Sentry (errors) + Web Vitals + basic tracing (optional: OpenTelemetry)
+Global defaults
+- Angular: 17+, Standalone APIs, SSR (Angular Universal)
+- Server: Express embedded in Angular SSR (`server.ts`), routes split per tool
+- Storage: CSV files under `database/` (git-ignored); later replaceable with DB
+- ID generation: UUID v4
+- Env: `.env` with `FILE_SUPPORTED=".pdf"` default; also OpenAI and Sheets keys
+- UI Theme: Inspired by cursor.com; consistent components and spacing
+- Docker: Multi-stage build; Nginx on port 80 reverse-proxies to Node SSR server; direct deep links work
+- Coding style: Short methods, no bloaters; one model per file; one service per file; one dataservice per file
 
-Labels used across the board:
-- `type:setup`, `type:feature`, `type:infra`, `type:security`, `type:docs`, `type:tests`
-- `size:S` (≤1d), `size:M` (≤3d), `size:L` (≤1w), `size:XL` (>1w)
-- `priority:P0|P1|P2`
+Labels and estimates
+- Labels: `type:setup`, `type:feature`, `type:infra`, `type:security`, `type:docs`, `type:tests`, `type:ux`
+- Sizes: `size:S` (≤1d), `size:M` (≤3d), `size:L` (≤1w), `size:XL` (>1w)
+- Priority: `P0`, `P1`, `P2`
 
----
-
-## Epic E0 — Foundation, Repo, and Tooling
-
-### E0-01 Choose baseline stack and conventions
-- **Description**: Confirm Angular, Node, package manager, test stack, and coding conventions. Document in `docs/stack.md`.
-- **Acceptance Criteria**:
-  - `docs/stack.md` lists versions and rationales
-  - Decision on `pnpm` vs `npm`
-  - Decision on Jest/Playwright
-- **Dependencies**: None
-- **Estimate**: S
-- **Labels**: `type:setup`, `priority:P0`
-
-### E0-02 Initialize repository and Angular workspace
-- **Description**: Create repo, Angular workspace with standalone configuration, strict mode, Vite builder, and app skeleton.
-- **Acceptance Criteria**:
-  - `main` branch protected, PR workflow defined
-  - Angular app generated with `standalone` true
-  - Initial commit with CI placeholder
-- **Dependencies**: E0-01
-- **Estimate**: S
-- **Labels**: `type:setup`, `priority:P0`
-
-### E0-03 Configure ESLint and Prettier
-- **Description**: Replace TSLint (if present) with ESLint. Add Prettier with compatible ESLint config.
-- **Acceptance Criteria**:
-  - `eslint` runs via `pnpm lint`
-  - `prettier` runs via `pnpm format`
-  - CI step fails on lint errors
-- **Dependencies**: E0-02
-- **Estimate**: S
-- **Labels**: `type:infra`, `type:tests`, `priority:P0`
-
-### E0-04 Commit hooks and quality gates
-- **Description**: Add Husky + lint-staged. Enforce `typecheck`, `lint`, and `format` on commit.
-- **Acceptance Criteria**:
-  - `pre-commit` runs `lint-staged`
-  - `pre-push` runs `pnpm test` and `pnpm typecheck`
-- **Dependencies**: E0-03
-- **Estimate**: S
-- **Labels**: `type:infra`
-
-### E0-05 Base scripts and environment management
-- **Description**: Add scripts: `dev`, `build`, `preview`, `test`, `test:watch`, `typecheck`, `lint`, `format`. Create `.env.example`.
-- **Acceptance Criteria**:
-  - `.env.example` includes API base URL, auth config
-  - Scripts documented in `README.md`
-- **Dependencies**: E0-02
-- **Estimate**: S
-- **Labels**: `type:setup`
-
-### E0-06 CI pipeline (build, lint, test, artifact)
-- **Description**: Implement GitHub Actions workflow for PRs and `main` merges. Cache pnpm, node.
-- **Acceptance Criteria**:
-  - Workflow status visible on PRs
-  - Fails on lint/test errors
-  - Stores build artifact
-- **Dependencies**: E0-03, E0-05
-- **Estimate**: M
-- **Labels**: `type:infra`, `priority:P0`
-
-### E0-07 Code owners and review rules
-- **Description**: Add `CODEOWNERS` mapping and PR template.
-- **Acceptance Criteria**:
-  - `CODEOWNERS` enforced
-  - PR template with checklists (tests, a11y, perf)
-- **Dependencies**: None
-- **Estimate**: S
-- **Labels**: `type:docs`
+Directory baseline
+- `database/` (CSV files, .gitignored)
+- `server/` (SSR, API routes) with `server.ts`, `api/` grouped per tool
+- `src/app/features/tools/*` (UI per tool)
+- `src/app/core/` (providers, logging, config)
+- `src/app/shared/` (UI primitives, tables, forms)
+- `models/`, `services/dataservice/`, `services/businessservice/`
+- `docs/`
 
 ---
 
-## Epic E1 — Architecture, Conventions, and Base App
+Epic E0 — Foundation, SSR API, and Standards
 
-### E1-01 Define folder structure and boundaries
-- **Description**: Establish `core`, `shared`, and `features/*` structure. Document naming, public APIs.
-- **Acceptance Criteria**:
-  - `docs/architecture.md` with diagrams
-  - Enforced barrels or explicit imports policy
-- **Dependencies**: E0-02
-- **Estimate**: M
-- **Labels**: `type:setup`, `type:docs`
+E0-01 Initialize workspace, SSR, and routing shell [size:S, P0, type:setup]
+- Create Angular 17 app with SSR (Universal). Add base routes `/`, `/tools`.
+- Acceptance: SSR builds and serves; navigating to `/` and `/tools` works.
 
-### E1-02 Core module replacement (standalone) and providers
-- **Description**: Implement `app.config.ts` with global providers (http, router, interceptors). Create `core` for singletons.
-- **Acceptance Criteria**:
-  - `provideHttpClient` with interceptors
-  - `provideRouter` with lazy routes placeholder
-- **Dependencies**: E1-01
-- **Estimate**: S
-- **Labels**: `type:infra`
+E0-02 `.env` and configuration provider [size:S, P0, type:infra]
+- Add `.env` and `.env.example` with `FILE_SUPPORTED=".pdf"`, OpenAI keys (key, model, project id, org id), Sheets keys (api key, sheet name, sheet id).
+- Provide app-wide configuration service with env fallback.
+- Acceptance: Config injectable; unit tests confirm defaults from env.
 
-### E1-03 Shared library and UI primitives
-- **Description**: Create `shared` with reusable components, directives, and pipes. Export via index.
-- **Acceptance Criteria**:
-  - At least Button, Modal shell, Icon wrapper
-  - Storybook ready (see E5-05)
-- **Dependencies**: E1-01
-- **Estimate**: M
-- **Labels**: `type:feature`
+E0-03 Git ignore and `database/` setup [size:S, P0, type:setup]
+- Create `database/` folder; add to `.gitignore`.
+- Acceptance: `database/` excluded from git; present in dev.
 
-### E1-04 State management strategy decision (NgRx vs Signals Store)
-- **Description**: Document tradeoffs and select default. Prototype one feature both ways.
-- **Acceptance Criteria**:
-  - Decision recorded in ADR `docs/adr/0001-state.md`
-  - Benchmarks or rationale captured
-- **Dependencies**: E1-01
-- **Estimate**: M
-- **Labels**: `type:docs`, `priority:P1`
+E0-04 Dataservice/businessservice architecture scaffolding [size:M, P0, type:infra]
+- Create base interfaces:
+  - Dataservice: CRUD over CSV, file IO utils, schema validation, id generation.
+  - Businessservice: Stateless orchestrators calling dataservices; placeholder implementations for later processing (convert/compose/etc.).
+- Acceptance: Interfaces defined; one example implementation with tests.
 
-### E1-05 Error handling strategy
-- **Description**: Define global error boundary patterns, http error parsing, user-friendly toasts.
-- **Acceptance Criteria**:
-  - Centralized error parser utility
-  - Integration with logging (E6-01)
-- **Dependencies**: E6-01
-- **Estimate**: S
-- **Labels**: `type:infra`
+E0-05 API scaffolding and route partitioning [size:M, P0, type:infra]
+- Embed Express into `server.ts`. Split API routes per tool under `server/api/<tool>/routes/*.ts`.
+- Global prefix `/api` and per-tool prefix `/api/tool-name/`.
+- Acceptance: Health endpoint `/api/health` returns 200; example tool endpoint returns 200.
 
-### E1-06 Configuration and environment separation
-- **Description**: Implement config provider reading from `environment.*` and `.env` at build time.
-- **Acceptance Criteria**:
-  - Distinct `dev`, `staging`, `prod` configs
-  - No secrets in repo
-- **Dependencies**: E0-05
-- **Estimate**: S
-- **Labels**: `type:security`
+E0-06 Swagger `/api/docs` [size:S, P0, type:infra]
+- Generate OpenAPI spec from route definitions; serve Swagger UI at `/api/docs`.
+- Acceptance: Browsable docs with paths grouped per tool.
+
+E0-07 Theming and base UI [size:M, P1, type:ux]
+- Theme resembling cursor.com: colors, typography, form controls, focus states.
+- Acceptance: Design tokens in CSS variables; global styles applied; dark/light optional.
+
+E0-08 Top navigation and route wiring [size:S, P1, type:feature]
+- Top nav links: Home (`/`), Tools (`/tools`). Tools page links to sub-tools.
+- Acceptance: Client routing to all tools pages; SSR deep links resolved via Nginx/Node.
+
+E0-09 Docker + Nginx reverse proxy [size:L, P0, type:infra]
+- Multi-stage build: Angular SSR server (Node) + Nginx on 80 proxying `/api` to Node and serving static/SSR for app routes. Direct URLs work.
+- Acceptance: `docker run -p 80:80` serves app; `/tools/*` deep links work; `/api/*` reachable.
+
+E0-10 Coding standards and documentation [size:S, P1, type:docs]
+- Document rules: short methods, one model/service per file, separation of concerns, naming conventions, testing requirements.
+- Acceptance: `docs/dev-preferences.md` committed.
 
 ---
 
-## Epic E2 — Routing and Navigation
+Epic E1 — Settings Tool `/tools` (User Preferences & Settings)
 
-### E2-01 Base routing with lazy-loaded features
-- **Description**: Create root routes and lazy load `features/home`, `features/auth`, `features/profile` (stubs).
-- **Acceptance Criteria**:
-  - Navigable routes with placeholders
-  - Scroll position restoration on navigation
-- **Dependencies**: E1-02
-- **Estimate**: S
-- **Labels**: `type:feature`
+Data requirements
+- CSV: `database/settings.csv` with keys/values; defaults from `.env` when missing.
+- Fields: `fileSupported` (default from env), `openAiKey`, `openAiModel`, `openAiProjectId`, `openAiOrgId`, `sheetApiKey`, `sheetName`, `sheetId`, and extensible.
 
-### E2-02 Guards, resolvers, and preloading
-- **Description**: Implement auth guard placeholder, data resolver example, and selective route preloading strategy.
-- **Acceptance Criteria**:
-  - Guard applied to protected routes
-  - Resolver demonstrated on profile route
-- **Dependencies**: E2-01, E3-02
-- **Estimate**: M
-- **Labels**: `type:feature`
+E1-01 Settings models and dataservice [size:S, P0, type:feature]
+- Create `Settings` model and `settingsDataservice` to read/write CSV with fallback to env.
+- Acceptance: Read returns defaults if CSV absent; write persists CSV; tests added.
 
-### E2-03 Breadcrumbs and title service
-- **Description**: Add dynamic document titles and breadcrumb service from route data.
-- **Acceptance Criteria**:
-  - Titles reflect current route
-  - Breadcrumb appears on protected pages
-- **Dependencies**: E2-01
-- **Estimate**: S
-- **Labels**: `type:feature`
+E1-02 Settings UI form and save [size:M, P0, type:feature]
+- Build form on `/tools` to edit settings. Include all specified fields; validate presence where needed.
+- On save, call API to persist via dataservice to CSV.
+- Acceptance: Form loads existing/fallback values; saving updates CSV; toasts on success/error.
+
+E1-03 Settings API endpoints [size:S, P0, type:infra]
+- `GET /api/settings/` read; `PUT /api/settings/` update.
+- Swagger documented; error handling consistent.
+- Acceptance: Endpoints tested via e2e.
 
 ---
 
-## Epic E3 — Authentication and Authorization
+Epic E2 — Upload Tool `/tools/upload`
 
-### E3-01 Auth domain models and API contracts
-- **Description**: Define `User`, `Session`, tokens, and API DTOs. Document flows.
-- **Acceptance Criteria**:
-  - Type-safe models and mappers
-  - Diagrams in `docs/auth.md`
-- **Dependencies**: E1-01
-- **Estimate**: M
-- **Labels**: `type:docs`, `type:feature`
+Data requirements
+- CSV: `database/uploads.csv` with columns: `id`, `filename`, `originalPath`, `mime`, `size`, `createdAt`.
+- Files stored under `database/uploads/<id>/<originalFilename>`.
 
-### E3-02 Auth service and HTTP interceptors
-- **Description**: Implement login, logout, refresh, token storage, Authorization header, and 401 retry.
-- **Acceptance Criteria**:
-  - Refresh token flow covered by tests
-  - Interceptor registered globally
-- **Dependencies**: E3-01, E1-02
-- **Estimate**: M
-- **Labels**: `type:security`, `type:feature`
+E2-01 Upload dataservice and storage layout [size:M, P0, type:infra]
+- Create dataservice for upload records and filesystem writes; generate UUIDs.
+- Acceptance: Files written under per-id directory; CSV entries created; tests included.
 
-### E3-03 Login/Register/Reset UI
-- **Description**: Build forms with Angular Material, validation, and inline errors.
-- **Acceptance Criteria**:
-  - Accessible forms (labels, aria, keyboard)
-  - Error messages from server displayed
-- **Dependencies**: E3-02
-- **Estimate**: M
-- **Labels**: `type:feature`, `type:accessibility`
+E2-02 Upload businessservice (stub) [size:S, P1, type:infra]
+- Orchestrates id generation and storage; no heavy processing yet.
+- Acceptance: Service returns created record; unit tests.
 
-### E3-04 Role-based access control (RBAC)
-- **Description**: Introduce simple RBAC service with route data integration.
-- **Acceptance Criteria**:
-  - Routes specify required roles
-  - Guard enforces roles in navigation and UI
-- **Dependencies**: E3-02
-- **Estimate**: M
-- **Labels**: `type:security`
+E2-03 Upload API [size:M, P0, type:feature]
+- `POST /api/upload/` multipart; returns record.
+- `GET /api/upload/` list; `GET /api/upload/:id` detail.
+- Acceptance: Swagger docs; file size/type validated against `fileSupported`.
+
+E2-04 Upload UI [size:M, P0, type:feature]
+- Page with uploader and table listing uploads (id, name, size, date).
+- Acceptance: Upload new file; table updates; validation messages shown.
 
 ---
 
-## Epic E4 — Data Access Layer and HTTP
+Epic E3 — Convert to Markdown `/tools/convert-markdown`
 
-### E4-01 HTTP client utilities and API base service
-- **Description**: Create base API service with typed requests, error mapping, retry/backoff helpers.
-- **Acceptance Criteria**:
-  - Consistent error object format
-  - Global timeout and cancellation support
-- **Dependencies**: E1-02
-- **Estimate**: M
-- **Labels**: `type:infra`
+Data requirements
+- CSV: `database/convert_markdown_jobs.csv` with `jobId`, `uploadId`, `command`, `status`, `progress`, `createdAt`.
+- Outputs under `database/markdown/<jobId>/<output.md>`; list tracked in `database/markdown_outputs.csv` with `jobId`, `markdownId`, `path`, `createdAt`.
 
-### E4-02 DTOs, mappers, and validation
-- **Description**: Define DTOs and mapping to domain models. Add lightweight runtime validation (zod or custom).
-- **Acceptance Criteria**:
-  - Invalid API responses surface clear errors
-  - Mapper tests included
-- **Dependencies**: E4-01
-- **Estimate**: M
-- **Labels**: `type:feature`, `type:tests`
+E3-01 Convert dataservice [size:M, P1, type:infra]
+- Persist jobs and outputs; list existing markdowns.
+- Acceptance: Can record job lifecycle and output paths; tests for CSV round-trip.
 
-### E4-03 Client-side caching and pagination helpers
-- **Description**: Provide cache layer (memory) and pagination utilities interoperable with NgRx or Signals.
-- **Acceptance Criteria**:
-  - Cache invalidation rules documented
-  - Pagination composable usable by at least one feature
-- **Dependencies**: E4-01, E1-04
-- **Estimate**: M
-- **Labels**: `type:infra`
+E3-02 Convert businessservice (template) [size:M, P1, type:infra]
+- Placeholder conversion pipeline; accepts upload id, options; updates progress.
+- Acceptance: Emits progress events; stubs write demo markdown file.
+
+E3-03 Convert API [size:M, P1, type:feature]
+- `POST /api/convert-markdown/jobs` start job; `GET /api/convert-markdown/jobs` list; `GET /api/convert-markdown/jobs/:jobId` status; `GET /api/convert-markdown/markdowns` list outputs.
+- Acceptance: Swagger; progress observable (polling or SSE optional).
+
+E3-04 Convert UI [size:M, P1, type:feature]
+- Dropdown to select uploaded file; form for options; table of submitted commands with status/progress; list of available markdown outputs.
+- Acceptance: Start job; see progress; see outputs.
 
 ---
 
-## Epic E5 — Design System, Theming, and Storybook
+Epic E4 — Content Breakdown `/tools/content-breakdown`
 
-### E5-01 Install Angular Material and CDK
-- **Description**: Add Angular Material with custom theme scaffold.
-- **Acceptance Criteria**:
-  - Dark and light theme toggles
-  - Typography and spacing scales defined
-- **Dependencies**: E0-02
-- **Estimate**: S
-- **Labels**: `type:feature`, `type:accessibility`
+Data requirements
+- CSV: `database/breakdown.csv` with `markdownId`, `chapterId`, `paragraphId`, `sentenceId`, `text`, `position` (or similar for ordering).
+- Map of markdownId to breakdown records; additional index CSV optional.
 
-### E5-02 Design tokens and CSS variables
-- **Description**: Implement tokens for color, spacing, radius, shadow via CSS variables and exportable TS.
-- **Acceptance Criteria**:
-  - Tokens referenced across components
-  - Docs in `docs/design-system.md`
-- **Dependencies**: E5-01
-- **Estimate**: M
-- **Labels**: `type:infra`, `type:docs`
+E4-01 Breakdown models and dataservice [size:M, P1, type:infra]
+- CRUD for breakdown entries; by markdown id.
+- Acceptance: Write and read breakdown sets; tests added.
 
-### E5-03 Layout system (Grid, responsive breakpoints)
-- **Description**: Provide responsive grid and container components.
-- **Acceptance Criteria**:
-  - Breakpoints documented and tested visually
-- **Dependencies**: E5-02
-- **Estimate**: M
-- **Labels**: `type:feature`
+E4-02 Breakdown businessservice (template) [size:M, P1, type:infra]
+- Stub to split markdown into sentences/paragraphs; generates IDs and order.
+- Acceptance: Deterministic breakdown for demo content.
 
-### E5-04 Accessibility foundations
-- **Description**: Keyboard focus styles, focus trap, skip links, color contrast.
-- **Acceptance Criteria**:
-  - Axe/Pa11y checks pass on key pages
-- **Dependencies**: E5-01
-- **Estimate**: M
-- **Labels**: `type:accessibility`, `type:tests`
-
-### E5-05 Storybook setup for components
-- **Description**: Configure Storybook with controls and a11y addons.
-- **Acceptance Criteria**:
-  - Stories for Button, Modal, FormField
-  - Visual regression baseline (optional)
-- **Dependencies**: E1-03
-- **Estimate**: M
-- **Labels**: `type:infra`, `type:tests`
+E4-03 Breakdown API and UI [size:M, P1, type:feature]
+- API: `POST /api/content-breakdown/:markdownId` produce breakdown; `GET /api/content-breakdown/:markdownId` list records.
+- UI: Dropdown of available markdowns; action to run breakdown; table/grid showing records.
+- Acceptance: Can run and view breakdown; CSV persisted.
 
 ---
 
-## Epic E6 — Observability, Logging, and Monitoring
+Epic E5 — Translate `/tools/translate`
 
-### E6-01 Client logging abstraction
-- **Description**: Implement logger with levels, JSON structure, and console transport.
-- **Acceptance Criteria**:
-  - Replace console.* with logger usage
-- **Dependencies**: None
-- **Estimate**: S
-- **Labels**: `type:infra`
+Data requirements
+- CSV: `database/translations.csv` with `translationId`, `sourceMarkdownId`, `strategy`, `targetLang`, `status`, `createdAt`.
+- Translated markdown files under `database/markdown_translated/<translationId>/<output.md>`.
+- If sentence-by-sentence strategy: also `database/translations_sentences.csv` mapping `sentenceId` → translated text.
 
-### E6-02 Error reporting integration (Sentry)
-- **Description**: Add Sentry SDK, DSN via env, source maps upload in CI.
-- **Acceptance Criteria**:
-  - Errors show release and user context (respect privacy)
-- **Dependencies**: E0-06
-- **Estimate**: M
-- **Labels**: `type:infra`, `type:security`
+E5-01 Translation dataservice [size:M, P1, type:infra]
+- Persist translation jobs, outputs, and (optional) sentence mappings.
+- Acceptance: CRUD with indexes by source and lang.
 
-### E6-03 Web Vitals and performance analytics
-- **Description**: Capture LCP, CLS, INP and send to analytics endpoint.
-- **Acceptance Criteria**:
-  - Dashboard or logs show vitals per release
-- **Dependencies**: None
-- **Estimate**: M
-- **Labels**: `type:infra`, `type:performance`
+E5-02 Translation businessservice (template) [size:M, P1, type:infra]
+- Stub that copies or lightly transforms source markdown; supports strategies: whole-file; sentence-by-sentence (enabled only when breakdown exists).
+- Acceptance: Flags strategy availability based on breakdown presence.
+
+E5-03 Translation API [size:M, P1, type:feature]
+- `POST /api/translate/jobs` start; `GET /api/translate/jobs`; `GET /api/translate/jobs/:id`; `GET /api/translate/markdowns` list outputs.
+- Acceptance: Swagger; gating logic for strategies.
+
+E5-04 Translation UI [size:M, P1, type:feature]
+- Dropdown of source markdowns; target lang dropdown (default from settings); strategy dropdown (enable sentence-by-sentence only if breakdown exists).
+- Table of submitted jobs with status; list outputs.
+- Acceptance: End-to-end flow with progress.
 
 ---
 
-## Epic E7 — Performance and SSR
+Epic E6 — Translation Fine-tune `/tools/translation-fine-tune`
 
-### E7-01 Angular Universal and hydration
-- **Description**: Add SSR build and hydrate on client.
-- **Acceptance Criteria**:
-  - SSR route renders on server
-  - No hydration mismatch in logs
-- **Dependencies**: E2-01
-- **Estimate**: L
-- **Labels**: `type:performance`
+Data requirements
+- Reads from `breakdown.csv` and `translations_sentences.csv` to map sentence pairs by `sentenceId`.
+- Writes back to `translations_sentences.csv` and updates translated markdown file upon save.
 
-### E7-02 Route-level code splitting and preloading
-- **Description**: Ensure each feature is lazily loaded and add custom preloading for critical routes.
-- **Acceptance Criteria**:
-  - Bundle analyzer shows reduced main bundle
-- **Dependencies**: E2-01
-- **Estimate**: S
-- **Labels**: `type:performance`
+E6-01 Fine-tune UI [size:L, P1, type:feature]
+- Paper-like inputs for each translated sentence; original shown read-only next to it; highlighting original when translated field is focused; preserve paragraph grouping (no extra margins; squared inputs; inline).
+- Acceptance: Smooth editing of many sentences; keyboard navigation; accessibility.
 
-### E7-03 Image optimization and asset policies
-- **Description**: Responsive images, lazy loading, preconnect, and caching headers.
-- **Acceptance Criteria**:
-  - Largest images served in WebP/AVIF
-- **Dependencies**: None
-- **Estimate**: S
-- **Labels**: `type:performance`
-
-### E7-04 Performance budgets in CI
-- **Description**: Set budgets for bundle sizes and INP/LCP thresholds.
-- **Acceptance Criteria**:
-  - CI fails on budget regressions
-- **Dependencies**: E0-06
-- **Estimate**: S
-- **Labels**: `type:infra`, `type:performance`
+E6-02 Fine-tune API and businessservice [size:M, P1, type:feature]
+- `GET /api/translation-fine-tune/:translationId` returns mapped pairs; `PUT /api/translation-fine-tune/:translationId` saves edits.
+- Businessservice maps sentences; dataservice writes to CSV and updates composed translated markdown.
+- Acceptance: Edits persist and reflect in translated markdown.
 
 ---
 
-## Epic E8 — Testing Strategy and Coverage
+Epic E7 — Compose `/tools/compose`
 
-### E8-01 Unit testing with Jest
-- **Description**: Configure Jest with ts-jest or swc, set coverage thresholds.
-- **Acceptance Criteria**:
-  - `pnpm test` runs and reports coverage
-- **Dependencies**: E0-03
-- **Estimate**: M
-- **Labels**: `type:tests`
+Data requirements
+- CSV: `database/compose_jobs.csv` with `jobId`, `inputs` (source ids array), `format`, `status`, `outputPath`.
+- Output markdown under `database/markdown_composed/<jobId>/<output.md>`.
+- Supported formats configured via settings/dataservice (e.g., side-by-side, paragraph-by-paragraph, sentence-by-sentence, translated-only default).
 
-### E8-02 Component testing with Testing Library
-- **Description**: Add `@testing-library/angular` and patterns for DOM queries.
-- **Acceptance Criteria**:
-  - Tests for shared components exist
-- **Dependencies**: E1-03
-- **Estimate**: S
-- **Labels**: `type:tests`
+E7-01 Compose dataservice [size:M, P1, type:infra]
+- Persist compose jobs and outputs.
+- Acceptance: CRUD and list outputs.
 
-### E8-03 E2E testing with Playwright
-- **Description**: Create basic login and navigation e2e specs.
-- **Acceptance Criteria**:
-  - E2E runs in CI headless
-- **Dependencies**: E3-03, E0-06
-- **Estimate**: M
-- **Labels**: `type:tests`
+E7-02 Compose businessservice (template) [size:M, P1, type:infra]
+- Stub merging logic respecting selected format; defaults to translated-only.
+- Acceptance: Writes composed markdown file deterministically.
 
-### E8-04 Test data builders and API mocking
-- **Description**: Introduce factories/builders and MSW-like mocking (or Angular `provideHttpClientTesting`).
-- **Acceptance Criteria**:
-  - Unit tests avoid real network
-- **Dependencies**: E8-01
-- **Estimate**: S
-- **Labels**: `type:tests`
+E7-03 Compose API and UI [size:M, P1, type:feature]
+- API: `POST /api/compose/jobs`; `GET /api/compose/jobs`; `GET /api/compose/jobs/:id`; `GET /api/compose/markdowns` outputs.
+- UI: Dropdowns to pick markdowns from convert/translate; format dropdown sourced from settings; show progress and outputs.
+- Acceptance: End-to-end compose flow.
 
 ---
 
-## Epic E9 — Security and Compliance
+Epic E8 — Convert to EPUB `/tools/convert-to-epub`
 
-### E9-01 Dependency scanning and updates
-- **Description**: Enable Dependabot/Renovate and `npm audit` checks.
-- **Acceptance Criteria**:
-  - Automated PRs for updates
-- **Dependencies**: E0-06
-- **Estimate**: S
-- **Labels**: `type:security`, `type:infra`
+Data requirements
+- CSV: `database/epub_jobs.csv` (`jobId`, `inputs`, `status`, `outputPath`);
+- Outputs under `database/epubs/<jobId>/<output.epub>`;
+- Businessservice must list available epubs for mail tool.
 
-### E9-02 Content Security Policy (CSP)
-- **Description**: Define CSP compatible with SSR and analytics. Document required origins.
-- **Acceptance Criteria**:
-  - Report-only mode enabled initially
-- **Dependencies**: E7-01
-- **Estimate**: M
-- **Labels**: `type:security`
+E8-01 EPUB dataservice and businessservice (template) [size:M, P1, type:infra]
+- Persist jobs and outputs; stub converter writing a sample EPUB.
+- Acceptance: Outputs appear; businessservice lists epubs consumable by mail tool.
 
-### E9-03 Secrets handling and .env policy
-- **Description**: Centralize secrets in CI and do not commit to repo. Pre-commit checks.
-- **Acceptance Criteria**:
-  - `gitleaks` or similar runs in CI
-- **Dependencies**: E0-04, E0-06
-- **Estimate**: S
-- **Labels**: `type:security`
+E8-02 EPUB API and UI [size:M, P1, type:feature]
+- API: `POST /api/convert-to-epub/jobs`; `GET /api/convert-to-epub/jobs`; `GET /api/convert-to-epub/jobs/:id`; `GET /api/convert-to-epub/epubs` list.
+- UI: Select input markdowns; show conversion jobs and output list.
+- Acceptance: End-to-end conversion with visible epubs.
 
 ---
 
-## Epic E10 — Internationalization (i18n) and Localization
+Epic E9 — Send Mail `/tools/send-mail`
 
-### E10-01 i18n scaffolding
-- **Description**: Enable Angular i18n or Transloco. Create locale switcher and translation files.
-- **Acceptance Criteria**:
-  - Two locales visible in app (e.g., en, es)
-- **Dependencies**: E1-02
-- **Estimate**: M
-- **Labels**: `type:feature`, `type:accessibility`
+Data requirements
+- Settings provide email config; CSV: `database/emails.csv` with `email`, `lastUsedAt`, `count`; CSV: `database/mail_jobs.csv` with `jobId`, `email`, `template`, `epubPath`, `status`, `createdAt`.
 
-### E10-02 Date/number/currency formatting
-- **Description**: Provide pipes/utilities and locale-aware formatting.
-- **Acceptance Criteria**:
-  - Locale switch updates formats immediately
-- **Dependencies**: E10-01
-- **Estimate**: S
-- **Labels**: `type:feature`
+Templates
+- Option 1: Thank you for using our service
+- Option 2: Sorry for the delay
+- Option 3: The book is ready (attach selected EPUB)
 
----
+E9-01 Mail dataservice and businessservice (template) [size:M, P1, type:infra]
+- Persist mail jobs and email list; suggestions dropdown from `emails.csv`.
+- Businessservice returns known emails; stub send (no real SMTP initially).
+- Acceptance: Job persistence; suggestions update after sends.
 
-## Epic E11 — PWA and Offline (Optional)
-
-### E11-01 Service Worker and caching strategies
-- **Description**: Enable service worker, cache static assets, and define runtime caching.
-- **Acceptance Criteria**:
-  - Lighthouse PWA passes core checks
-- **Dependencies**: E7-01
-- **Estimate**: M
-- **Labels**: `type:feature`, `type:performance`
-
-### E11-02 Offline UX and sync
-- **Description**: Provide offline indicators and deferred sync for queued actions.
-- **Acceptance Criteria**:
-  - Actions queued offline are retried when online
-- **Dependencies**: E11-01, E4-03
-- **Estimate**: L
-- **Labels**: `type:feature`
+E9-02 Mail API and UI [size:M, P1, type:feature]
+- API: `POST /api/send-mail/jobs`; `GET /api/send-mail/jobs`; `GET /api/send-mail/emails`.
+- UI: New email input with suggestions; template selection; EPUB dropdown populated from E8; status table.
+- Acceptance: Create jobs; statuses visible; emails list grows.
 
 ---
 
-## Epic E12 — Release, Environments, and Delivery
+Epic E10 — Order Management `/tools/order-management`
 
-### E12-01 Environment deployments
-- **Description**: Configure staging and production deployments (e.g., Vercel/CF Pages/Static hosting + SSR node where needed).
-- **Acceptance Criteria**:
-  - PR previews available
-  - Staging and prod URLs documented
-- **Dependencies**: E0-06, E7-01
-- **Estimate**: M
-- **Labels**: `type:infra`
+Data requirements
+- CSV: `database/orders.csv` with `orderId`, `bookName` (req), `author` (req), `format` (req from settings), `userEmail`, `originalFileId` (optional), `translatedFileId` (optional), `createdAt`.
 
-### E12-02 Versioning and changelog
-- **Description**: Conventional commits, semantic-release (or Changesets) for automated versioning and changelog.
-- **Acceptance Criteria**:
-  - Automatic release notes on main merges
-- **Dependencies**: E0-04
-- **Estimate**: M
-- **Labels**: `type:infra`, `type:docs`
+E10-01 Order models, dataservice, and UI [size:L, P1, type:feature]
+- CRUD orders; validations for required fields; supported file types aligned with settings.
+- Acceptance: Table + create/edit/delete modals; references to upload ids validated.
 
-### E12-03 Feature flags and progressive delivery
-- **Description**: Add boolean flag provider and docs on rollout strategy.
-- **Acceptance Criteria**:
-  - At least one feature behind a flag
-- **Dependencies**: E1-02
-- **Estimate**: S
-- **Labels**: `type:feature`, `type:infra`
+E10-02 Order API [size:M, P1, type:feature]
+- RESTful endpoints under `/api/order-management/` for CRUD.
+- Acceptance: Swagger documented; e2e tests for CRUD.
 
 ---
 
-## Epic E13 — Documentation and Developer Experience
+Epic E11 — Third-parties Management `/tools/third-parites` (printing, ads, bookshelf, shipping)
 
-### E13-01 Repository documentation
-- **Description**: Write `README.md`, `CONTRIBUTING.md`, and `docs/index.md`.
-- **Acceptance Criteria**:
-  - Local dev steps validated on clean machine
-- **Dependencies**: E0-05
-- **Estimate**: S
-- **Labels**: `type:docs`
+Data requirements
+- CSV: `database/partners.csv` with partner records (type, name, endpoints/configs, contact).
+- CSV: `database/bookshelf.csv` listing available composed books; references to files via path columns (pdf, md, epub).
+- CSV: `database/shipments.csv` with shipping requests.
 
-### E13-02 Architecture Decision Records (ADR)
-- **Description**: Set up `docs/adr` and capture key decisions (state, SSR, testing).
-- **Acceptance Criteria**:
-  - At least three ADRs filed
-- **Dependencies**: E1-04, E7-01, E8-01
-- **Estimate**: S
-- **Labels**: `type:docs`
+E11-01 Partners CRUD [size:M, P2, type:feature]
+- UI + API to manage print manufacturers, ads, bookshelf entries, shipping partners.
+- Acceptance: Table views and forms; references to related files stored by path.
 
-### E13-03 Developer onboarding guide
-- **Description**: Short guide to set up, debug, profile, and test.
-- **Acceptance Criteria**:
-  - Verified by a new contributor
-- **Dependencies**: E13-01
-- **Estimate**: S
-- **Labels**: `type:docs`
+E11-02 Bookshelf order-to-print flow (stub) [size:L, P2, type:feature]
+- Select an order on the shelf and submit; businessservice stubs sending to print manufacturer and creating a shipment record.
+- Acceptance: Records created; statuses updated.
 
 ---
 
-## Epic E14 — Feature Templates and Placeholders
+Epic E12 — Common Infrastructure and Cross-cutting Concerns
 
-These tickets establish repeatable patterns for product features. Replace `Entity` with your domain object (e.g., Project, Order, Dashboard).
+E12-01 File reference policy and schemas [size:S, P0, type:docs]
+- Document CSV schemas and file path conventions for each tool.
+- Acceptance: `docs/csv-schemas.md` complete.
 
-### E14-01 Feature scaffolding template
-- **Description**: Create a script or documented steps to generate a feature with routes, store, services, and tests.
-- **Acceptance Criteria**:
-  - Template produces compilable feature with tests
-- **Dependencies**: E1-01, E8-01
-- **Estimate**: M
-- **Labels**: `type:infra`
+E12-02 Logging and job progress model [size:M, P1, type:infra]
+- Standardize job statuses: queued, running, succeeded, failed; include progress percent and messages.
+- Acceptance: Utilities available and used by all job-based tools.
 
-### E14-02 `Entity` list page
-- **Description**: Build list view with server-driven pagination, sorting, and filters.
-- **Acceptance Criteria**:
-  - Accessible table with keyboard navigation
-  - API-driven data with loading/error states
-- **Dependencies**: E4-03, E5-03
-- **Estimate**: L
-- **Labels**: `type:feature`
+E12-03 Reusable UI primitives [size:M, P1, type:ux]
+- Tables with sorting/filtering; form field components; toasts; confirmations.
+- Acceptance: Used in at least three tools.
 
-### E14-03 `Entity` detail page
-- **Description**: Read-only details with breadcrumb, deep links, and shareable URL.
-- **Acceptance Criteria**:
-  - Handles not-found and unauthorized states
-- **Dependencies**: E2-02
-- **Estimate**: M
-- **Labels**: `type:feature`
+E12-04 Security basics [size:S, P1, type:security]
+- Input validation, file type checking from settings, rate limits on sensitive endpoints.
+- Acceptance: Tests for validation; configuration-driven limits.
 
-### E14-04 `Entity` create/edit forms
-- **Description**: Reactive forms with validation, optimistic UI, and error summaries.
-- **Acceptance Criteria**:
-  - Form accessible, validation messages localized
-- **Dependencies**: E10-01, E5-04
-- **Estimate**: L
-- **Labels**: `type:feature`
+E12-05 Tests and CI [size:M, P1, type:tests]
+- Unit tests for dataservices/businessservices; e2e smoke for main flows; CI runs tests and lints.
+- Acceptance: Green CI on PRs; coverage threshold documented.
 
-### E14-05 `Entity` delete flow
-- **Description**: Confirmation modal, error handling, and toast notifications.
-- **Acceptance Criteria**:
-  - Deletion audited via logger
-- **Dependencies**: E6-01
-- **Estimate**: S
-- **Labels**: `type:feature`
+E12-06 Swagger completeness and grouping [size:S, P1, type:infra]
+- Ensure all endpoints documented and grouped under their tool names.
+- Acceptance: `/api/docs` shows all paths; no missing schemas.
 
 ---
 
-## Cross-Cutting Definition of Done (apply to all tickets)
-- Unit and/or integration tests added or updated
-- Lint, typecheck, and formatting pass locally and in CI
-- Public APIs typed and documented
-- Accessibility checked for new UI (focus, labels, contrast)
-- Performance impact considered (bundle size, lazy-loading)
-- Security implications assessed (no secrets, safe inputs)
-- Docs updated (README, ADRs, or feature docs as appropriate)
+API Overview (prefix and examples)
+- Base: `/api`
+- Settings: `/api/settings/`
+- Upload: `/api/upload/`
+- Convert Markdown: `/api/convert-markdown/`
+- Content Breakdown: `/api/content-breakdown/`
+- Translate: `/api/translate/`
+- Translation Fine-tune: `/api/translation-fine-tune/`
+- Compose: `/api/compose/`
+- Convert to EPUB: `/api/convert-to-epub/`
+- Send Mail: `/api/send-mail/`
+- Order Mgmt: `/api/order-management/`
+- Third-parties: `/api/third-parites/`
+- Swagger: `/api/docs`
 
-## Suggested Execution Order (high level)
-1. E0 Foundation (E0-01 → E0-07)
-2. E1 Architecture (E1-01 → E1-06)
-3. E2 Routing baseline
-4. E5 Design System basics
-5. E3 Auth (minimum viable login/logout)
-6. E4 Data access utilities
-7. E8 Testing stack
-8. E6 Observability minimal
-9. E7 Performance/SSR where needed
-10. E10 i18n and E9 security tightening
-11. E14 Feature delivery using templates
-12. E12 Release and flags
-13. E13 Documentation polish
+Suggested execution order
+1) E0 Foundation (SSR, config, database/, API, Swagger, Docker/Nginx, theme, nav)
+2) E1 Settings
+3) E2 Upload
+4) E3 Convert Markdown
+5) E4 Content Breakdown
+6) E5 Translate
+7) E6 Translation Fine-tune
+8) E7 Compose
+9) E8 Convert to EPUB
+10) E9 Send Mail
+11) E10 Order Management
+12) E11 Third-parties
+13) E12 Cross-cutting hardening (logging, security, tests, docs)
 
-## Open Questions (to refine with stakeholders)
-- Identity provider details (OIDC issuer, scopes, token lifetimes)
-- Required locales and translation sourcing process
-- Targeted browsers and performance SLAs (LCP/INP budgets)
-- Hosting and deployment constraints (static vs SSR node runtime)
-- Data retention, audit, and compliance requirements (PII)
+Definition of Done (for all tickets)
+- Short, readable methods; one model/service per file
+- Types/interfaces defined; CSV schema documented where applicable
+- Unit/e2e tests updated; lint/typecheck pass; CI green
+- Swagger updated for any endpoint change
+- UI accessible (labels, focus, keyboard); theme consistent
+- No secrets in repo; `.env` driven configuration
+- Direct deep links work in Docker+Nginx deployment
