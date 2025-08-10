@@ -371,3 +371,268 @@ Definition of Done (for all tickets)
 - UI accessible (labels, focus, keyboard); theme consistent
 - No secrets in repo; `.env` driven configuration
 - Direct deep links work in Docker+Nginx deployment
+
+## API Input/Output and CSV Mapping (per endpoint)
+
+Conventions
+- Input: path params, query params, and request body fields
+- Output: response body structure
+- CSV: tables read/written and impacted columns
+- Status: typical statuses per operation (200/201/400/404/500)
+
+### Settings `/api/settings/`
+- GET `/api/settings/`
+  - Input: none
+  - Output: `{ fileSupported: string, openAiKey?: string, openAiModel?: string, openAiProjectId?: string, openAiOrgId?: string, sheetApiKey?: string, sheetName?: string, sheetId?: string }`
+  - CSV: READ `database/settings.csv` columns `[key, value]` for each of the fields; fallback to `.env` if missing
+  - Status: 200
+- PUT `/api/settings/`
+  - Input (body): Partial settings object with any of the fields above
+  - Output: Saved settings object (same shape as GET)
+  - CSV: WRITE/UPSERT `database/settings.csv` rows for updated keys
+  - Status: 200 (updated) / 400 (validation)
+
+### Upload `/api/upload/`
+- POST `/api/upload/` (multipart)
+  - Input: file field `file`
+  - Output: `{ id: string, filename: string, originalPath: string, mime: string, size: number, createdAt: string }`
+  - CSV: WRITE `database/uploads.csv` columns `[id, filename, originalPath, mime, size, createdAt]`
+  - Filesystem: stores file at `database/uploads/{id}/{originalFilename}`
+  - Status: 201 / 400 (type unsupported per settings.fileSupported)
+- GET `/api/upload/`
+  - Input: none
+  - Output: `Array<UploadRecord>` (shape as POST output)
+  - CSV: READ `database/uploads.csv`
+  - Status: 200
+- GET `/api/upload/:id`
+  - Input: `id` (path)
+  - Output: `UploadRecord | 404`
+  - CSV: READ `database/uploads.csv`
+  - Status: 200 / 404
+
+### Convert Markdown `/api/convert-markdown/`
+- POST `/api/convert-markdown/jobs`
+  - Input (body): `{ uploadId: string, command?: string, options?: Record<string, unknown> }`
+  - Output: `{ jobId: string, uploadId: string, command?: string, status: 'queued'|'running'|'succeeded'|'failed', progress: number, createdAt: string }`
+  - CSV: WRITE `database/convert_markdown_jobs.csv` `[jobId, uploadId, command, status, progress, createdAt]`
+  - Status: 201 / 400 (invalid uploadId)
+- GET `/api/convert-markdown/jobs`
+  - Input: optional query filters (status)
+  - Output: `Array<Job>` (shape as above)
+  - CSV: READ `database/convert_markdown_jobs.csv`
+  - Status: 200
+- GET `/api/convert-markdown/jobs/:jobId`
+  - Input: `jobId` (path)
+  - Output: `Job | 404`
+  - CSV: READ `database/convert_markdown_jobs.csv`
+  - Status: 200 / 404
+- GET `/api/convert-markdown/markdowns`
+  - Input: optional query `uploadId`
+  - Output: `Array<{ jobId: string, markdownId: string, path: string, createdAt: string }>`
+  - CSV: READ `database/markdown_outputs.csv` `[jobId, markdownId, path, createdAt]`
+  - Filesystem: markdown files at `database/markdown/{jobId}/{output.md}`
+  - Status: 200
+
+### Content Breakdown `/api/content-breakdown/`
+- POST `/api/content-breakdown/:markdownId`
+  - Input: `markdownId` (path)
+  - Output: `{ markdownId: string, recordsCreated: number }`
+  - CSV: WRITE `database/breakdown.csv` columns `[markdownId, chapterId, paragraphId, sentenceId, text, position, createdAt]`
+  - Filesystem: reads markdown from `markdown_outputs.csv` path
+  - Status: 201 / 400 (missing markdown) / 404
+- GET `/api/content-breakdown/:markdownId`
+  - Input: `markdownId` (path)
+  - Output: `Array<{ markdownId: string, chapterId: string, paragraphId: string, sentenceId: string, text: string, position: number }>`
+  - CSV: READ `database/breakdown.csv`
+  - Status: 200 / 404
+
+### Translate `/api/translate/`
+- POST `/api/translate/jobs`
+  - Input (body): `{ sourceMarkdownId: string, targetLang: 'en'|'vi', strategy: 'whole-file'|'sentence-by-sentence' }`
+  - Output: `{ translationId: string, sourceMarkdownId: string, targetLang: string, strategy: string, status: 'queued'|'running'|'succeeded'|'failed', createdAt: string }`
+  - CSV: WRITE `database/translations.csv` `[translationId, sourceMarkdownId, targetLang, strategy, status, createdAt]`
+  - Note: if strategy is sentence-by-sentence, will also initialize `database/translations_sentences.csv` rows mapping `[translationId, sentenceId, translatedText]`
+  - Status: 201 / 400 (invalid strategy or missing breakdown)
+- GET `/api/translate/jobs`
+  - Input: optional query filters (status, targetLang)
+  - Output: `Array<TranslationJob>`
+  - CSV: READ `database/translations.csv`
+  - Status: 200
+- GET `/api/translate/jobs/:id`
+  - Input: `id` (translationId)
+  - Output: `TranslationJob | 404`
+  - CSV: READ `database/translations.csv`
+  - Status: 200 / 404
+- GET `/api/translate/markdowns`
+  - Input: optional query `sourceMarkdownId`
+  - Output: `Array<{ translationId: string, sourceMarkdownId: string, targetLang: string, path: string, createdAt: string }>`
+  - CSV: READ `database/translations.csv` (for metadata) and derived outputs index (if separate) e.g., `database/markdown_translated_index.csv` `[translationId, path, createdAt]`
+  - Filesystem: translated markdown at `database/markdown_translated/{translationId}/{output.md}`
+  - Status: 200
+
+### Translation Fine-tune `/api/translation-fine-tune/`
+- GET `/api/translation-fine-tune/:translationId`
+  - Input: `translationId` (path)
+  - Output: `Array<{ sentenceId: string, originalText: string, translatedText: string }>`
+  - CSV: READ `database/breakdown.csv` and `database/translations_sentences.csv` (join on `sentenceId`)
+  - Status: 200 / 404
+- PUT `/api/translation-fine-tune/:translationId`
+  - Input (body): `Array<{ sentenceId: string, translatedText: string }>`
+  - Output: `{ translationId: string, updated: number }`
+  - CSV: UPSERT `database/translations_sentences.csv` rows for provided `sentenceId`; update aggregate translated markdown file
+  - Filesystem: rewrite translated markdown under `database/markdown_translated/{translationId}/`
+  - Status: 200 / 400
+
+### Compose `/api/compose/`
+- POST `/api/compose/jobs`
+  - Input (body): `{ inputMarkdownIds: string[], format: 'side-by-side'|'paragraph-by-paragraph'|'sentence-by-sentence'|'translated-only' }`
+  - Output: `{ jobId: string, inputs: string[], format: string, status: 'queued'|'running'|'succeeded'|'failed', outputPath?: string, createdAt: string }`
+  - CSV: WRITE `database/compose_jobs.csv` `[jobId, inputs(json), format, status, outputPath, createdAt]`
+  - Filesystem: composed markdown at `database/markdown_composed/{jobId}/{output.md}`
+  - Status: 201 / 400
+- GET `/api/compose/jobs`
+  - Input: optional query filters (status)
+  - Output: `Array<ComposeJob>`
+  - CSV: READ `database/compose_jobs.csv`
+  - Status: 200
+- GET `/api/compose/jobs/:id`
+  - Input: `id` (path)
+  - Output: `ComposeJob | 404`
+  - CSV: READ `database/compose_jobs.csv`
+  - Status: 200 / 404
+- GET `/api/compose/markdowns`
+  - Input: none
+  - Output: `Array<{ jobId: string, path: string, createdAt: string }>`
+  - CSV: READ from `database/compose_jobs.csv` where `status='succeeded'` to derive outputs (or separate index CSV)
+  - Filesystem: composed markdown paths as persisted in job
+  - Status: 200
+
+### Convert to EPUB `/api/convert-to-epub/`
+- POST `/api/convert-to-epub/jobs`
+  - Input (body): `{ inputMarkdownIds: string[] }`
+  - Output: `{ jobId: string, inputs: string[], status: 'queued'|'running'|'succeeded'|'failed', outputPath?: string, createdAt: string }`
+  - CSV: WRITE `database/epub_jobs.csv` `[jobId, inputs(json), status, outputPath, createdAt]`
+  - Filesystem: epubs at `database/epubs/{jobId}/{output.epub}`
+  - Status: 201 / 400
+- GET `/api/convert-to-epub/jobs`
+  - Input: optional query filters (status)
+  - Output: `Array<EpubJob>`
+  - CSV: READ `database/epub_jobs.csv`
+  - Status: 200
+- GET `/api/convert-to-epub/jobs/:id`
+  - Input: `id` (jobId)
+  - Output: `EpubJob | 404`
+  - CSV: READ `database/epub_jobs.csv`
+  - Status: 200 / 404
+- GET `/api/convert-to-epub/epubs`
+  - Input: none
+  - Output: `Array<{ jobId: string, path: string, createdAt: string }>`
+  - CSV: READ from `database/epub_jobs.csv` where `status='succeeded'` (or a separate `epub_index.csv`)
+  - Filesystem: epub paths
+  - Status: 200
+
+### Send Mail `/api/send-mail/`
+- POST `/api/send-mail/jobs`
+  - Input (body): `{ email: string, template: 'thank-you'|'delay'|'book-ready', epubPath?: string }`
+  - Output: `{ jobId: string, email: string, template: string, epubPath?: string, status: 'queued'|'running'|'succeeded'|'failed', createdAt: string }`
+  - CSV: WRITE `database/mail_jobs.csv` `[jobId, email, template, epubPath, status, createdAt]`; UPSERT `database/emails.csv` `[email, lastUsedAt, count]`
+  - Status: 201 / 400
+- GET `/api/send-mail/jobs`
+  - Input: optional query filters (status, email)
+  - Output: `Array<MailJob>`
+  - CSV: READ `database/mail_jobs.csv`
+  - Status: 200
+- GET `/api/send-mail/emails`
+  - Input: optional query `q` for suggestions
+  - Output: `Array<{ email: string, lastUsedAt: string, count: number }>`
+  - CSV: READ `database/emails.csv`
+  - Status: 200
+
+### Order Management `/api/order-management/`
+- GET `/api/order-management/orders`
+  - Input: optional query filters (format, email)
+  - Output: `Array<Order>` where `Order = { orderId: string, bookName: string, author: string, format: string, userEmail?: string, originalFileId?: string, translatedFileId?: string, createdAt: string, updatedAt?: string }`
+  - CSV: READ `database/orders.csv`
+  - Status: 200
+- GET `/api/order-management/orders/:orderId`
+  - Input: `orderId` (path)
+  - Output: `Order | 404`
+  - CSV: READ `database/orders.csv`
+  - Status: 200 / 404
+- POST `/api/order-management/orders`
+  - Input (body): `{ bookName: string, author: string, format: string, userEmail?: string, originalFileId?: string, translatedFileId?: string }`
+  - Output: `Order`
+  - CSV: WRITE `database/orders.csv` `[orderId, bookName, author, format, userEmail, originalFileId, translatedFileId, createdAt]`
+  - Status: 201 / 400
+- PUT `/api/order-management/orders/:orderId`
+  - Input: `orderId` (path), body partial `Order`
+  - Output: `Order`
+  - CSV: UPDATE `database/orders.csv` row by `orderId`, update `updatedAt`
+  - Status: 200 / 404 / 400
+- DELETE `/api/order-management/orders/:orderId`
+  - Input: `orderId` (path)
+  - Output: `{ deleted: true }`
+  - CSV: DELETE from `database/orders.csv` by `orderId`
+  - Status: 200 / 404
+
+### Third-parties `/api/third-parites/`
+- Partners
+  - GET `/api/third-parites/partners`
+    - Input: optional query `type`
+    - Output: `Array<{ partnerId: string, type: 'print'|'ads'|'bookshelf'|'shipping', name: string, endpoint?: string, configJson?: string, contact?: string, createdAt: string }>`
+    - CSV: READ `database/partners.csv` `[partnerId, type, name, endpoint, configJson, contact, createdAt]`
+    - Status: 200
+  - POST `/api/third-parites/partners`
+    - Input (body): `{ type: string, name: string, endpoint?: string, config?: Record<string, unknown>, contact?: string }`
+    - Output: Partner record
+    - CSV: WRITE `database/partners.csv` (config serialized to `configJson`)
+    - Status: 201 / 400
+  - PUT `/api/third-parites/partners/:partnerId`
+    - Input: `partnerId` (path), body partial partner
+    - Output: Partner record
+    - CSV: UPDATE `database/partners.csv`
+    - Status: 200 / 404 / 400
+  - DELETE `/api/third-parites/partners/:partnerId`
+    - Input: `partnerId`
+    - Output: `{ deleted: true }`
+    - CSV: DELETE from `database/partners.csv`
+    - Status: 200 / 404
+- Bookshelf
+  - GET `/api/third-parites/bookshelf`
+    - Input: none
+    - Output: `Array<{ shelfId: string, title: string, composedMarkdownPath: string, epubPath?: string, orderId?: string, createdAt: string }>`
+    - CSV: READ `database/bookshelf.csv` `[shelfId, title, composedMarkdownPath, epubPath, orderId, createdAt]`
+    - Status: 200
+  - POST `/api/third-parites/bookshelf`
+    - Input (body): `{ title: string, composedMarkdownPath: string, epubPath?: string, orderId?: string }`
+    - Output: Shelf record
+    - CSV: WRITE `database/bookshelf.csv`
+    - Status: 201 / 400
+  - DELETE `/api/third-parites/bookshelf/:shelfId`
+    - Input: `shelfId`
+    - Output: `{ deleted: true }`
+    - CSV: DELETE from `database/bookshelf.csv`
+    - Status: 200 / 404
+- Shipments
+  - GET `/api/third-parites/shipments`
+    - Input: optional query filters (status)
+    - Output: `Array<{ shipmentId: string, orderId: string, partnerId: string, status: 'queued'|'sent'|'delivered'|'failed', trackingNumber?: string, createdAt: string }>`
+    - CSV: READ `database/shipments.csv` `[shipmentId, orderId, partnerId, status, trackingNumber, createdAt]`
+    - Status: 200
+  - POST `/api/third-parites/shipments`
+    - Input (body): `{ orderId: string, partnerId: string }`
+    - Output: Shipment record
+    - CSV: WRITE `database/shipments.csv`
+    - Status: 201 / 400
+
+### Misc
+- GET `/api/health`
+  - Input: none
+  - Output: `{ status: 'ok', time: string }`
+  - CSV: none
+  - Status: 200
+- GET `/api/docs`
+  - Input: none
+  - Output: Swagger UI
+  - CSV: none
+  - Status: 200
