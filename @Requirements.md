@@ -636,3 +636,35 @@ Conventions
   - Output: Swagger UI
   - CSV: none
   - Status: 200
+
+## Paging for GET list endpoints
+
+Standard parameters and response shape apply to all GET list endpoints below.
+
+- Query params:
+  - `page`: number, default 1, min 1
+  - `pageSize`: number, default 20, max 100
+  - Optional: `sort` (column name), `order` ('asc'|'desc'); default sort is `createdAt desc` when available
+- Response envelope:
+  - `{ items: T[], page: number, pageSize: number, total: number, totalPages: number }`
+- CSV behavior:
+  - Rows are read from the corresponding CSV, filtered by any request filters, sorted, then paginated in-memory
+
+Applies to these endpoints:
+- `/api/upload/` (list uploads)
+- `/api/convert-markdown/jobs` (list jobs)
+- `/api/convert-markdown/markdowns` (list outputs)
+- `/api/content-breakdown/:markdownId` (list breakdown records for markdown)
+- `/api/translate/jobs` (list translation jobs)
+- `/api/translate/markdowns` (list translated outputs)
+- `/api/translation-fine-tune/:translationId` (list sentence pairs for fine-tuning)
+- `/api/compose/jobs` (list compose jobs)
+- `/api/compose/markdowns` (list composed outputs)
+- `/api/convert-to-epub/jobs` (list epub jobs)
+- `/api/convert-to-epub/epubs` (list epubs)
+- `/api/send-mail/jobs` (list mail jobs)
+- `/api/send-mail/emails` (list/suggest emails; when `q` present, filter before pagination)
+- `/api/order-management/orders` (list orders)
+- `/api/third-parites/partners` (list partners)
+- `/api/third-parites/bookshelf` (list bookshelf entries)
+- `/api/third-parites/shipments` (list shipments)
