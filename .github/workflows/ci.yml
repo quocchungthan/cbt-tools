@@ -24,6 +24,14 @@ jobs:
         with:
           version: 9.12.0
 
+      - name: Ensure pnpm via Corepack (fallback)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.12.0 --activate
+
+      - name: Verify pnpm
+        run: pnpm -v
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
