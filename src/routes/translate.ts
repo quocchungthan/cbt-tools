@@ -7,6 +7,68 @@ import { paginate } from '../lib/paging';
 
 export const translateRouter = Router();
 
+/**
+ * @openapi
+ * /translate/jobs:
+ *   post:
+ *     tags: [translate]
+ *     summary: Create translation job
+ *     responses:
+ *       201:
+ *         description: Created
+ *   get:
+ *     tags: [translate]
+ *     summary: List translation jobs
+ *     responses:
+ *       200:
+ *         description: List
+ * /translate/jobs/{id}:
+ *   get:
+ *     tags: [translate]
+ *     summary: Get translation job
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Job
+ *       404:
+ *         description: Not found
+ * /translate/markdowns:
+ *   get:
+ *     tags: [translate]
+ *     summary: List translated markdowns
+ *     responses:
+ *       200:
+ *         description: List
+ * /translation-fine-tune/{translationId}:
+ *   get:
+ *     tags: [translation-fine-tune]
+ *     summary: List sentence pairs
+ *     parameters:
+ *       - in: path
+ *         name: translationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: List
+ *   put:
+ *     tags: [translation-fine-tune]
+ *     summary: Update sentence pairs
+ *     parameters:
+ *       - in: path
+ *         name: translationId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *     responses:
+ *       200:
+ *         description: Updated
+ */
 const postJob = z.object({
   sourceMarkdownId: z.string(),
   targetLang: z.enum(['en','vi']),
@@ -43,7 +105,6 @@ translateRouter.get('/translate/jobs/:id', async (req, res, next) => {
 
 translateRouter.get('/translate/markdowns', async (_req, res, next) => {
   try {
-    // Stub: reuse translations list as index
     const all = await listTranslations();
     const items = all.map(t => ({ translationId: t.translationId, sourceMarkdownId: t.sourceMarkdownId, targetLang: t.targetLang, path: `database/markdown_translated/${t.translationId}/output.md`, createdAt: t.createdAt }));
     res.json({ items, page: 1, pageSize: items.length, total: items.length, totalPages: 1 });

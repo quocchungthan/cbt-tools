@@ -7,6 +7,34 @@ import { paginate } from '../lib/paging';
 
 export const mailRouter = Router();
 
+/**
+ * @openapi
+ * /send-mail/jobs:
+ *   post:
+ *     tags: [send-mail]
+ *     summary: Create mail job
+ *     responses:
+ *       201:
+ *         description: Created
+ *   get:
+ *     tags: [send-mail]
+ *     summary: List mail jobs
+ *     responses:
+ *       200:
+ *         description: List
+ * /send-mail/emails:
+ *   get:
+ *     tags: [send-mail]
+ *     summary: List email addresses
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: false
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: List
+ */
 const postBody = z.object({ email: z.string().email(), template: z.enum(['thank-you','delay','book-ready']), epubPath: z.string().optional() });
 
 mailRouter.post('/send-mail/jobs', validate({ body: postBody }), async (req, res, next) => {

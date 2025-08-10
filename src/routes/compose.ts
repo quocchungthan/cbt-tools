@@ -9,6 +9,43 @@ import { paginate } from '../lib/paging';
 
 export const composeRouter = Router();
 
+/**
+ * @openapi
+ * /compose/jobs:
+ *   post:
+ *     tags: [compose]
+ *     summary: Create compose job
+ *     responses:
+ *       201:
+ *         description: Created
+ *   get:
+ *     tags: [compose]
+ *     summary: List compose jobs
+ *     responses:
+ *       200:
+ *         description: List
+ * /compose/jobs/{id}:
+ *   get:
+ *     tags: [compose]
+ *     summary: Get compose job
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Job
+ *       404:
+ *         description: Not found
+ * /compose/markdowns:
+ *   get:
+ *     tags: [compose]
+ *     summary: List composed markdowns
+ *     responses:
+ *       200:
+ *         description: List
+ */
 const postBody = z.object({
   inputMarkdownIds: z.array(z.string()),
   format: z.enum(['side-by-side','paragraph-by-paragraph','sentence-by-sentence','translated-only']),

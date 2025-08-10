@@ -7,6 +7,62 @@ import { paginate } from '../lib/paging';
 
 export const ordersRouter = Router();
 
+/**
+ * @openapi
+ * /order-management/orders:
+ *   get:
+ *     tags: [order-management]
+ *     summary: List orders
+ *     responses:
+ *       200:
+ *         description: List
+ *   post:
+ *     tags: [order-management]
+ *     summary: Create order
+ *     responses:
+ *       201:
+ *         description: Created
+ * /order-management/orders/{orderId}:
+ *   get:
+ *     tags: [order-management]
+ *     summary: Get order
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Order
+ *       404:
+ *         description: Not found
+ *   put:
+ *     tags: [order-management]
+ *     summary: Update order
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Updated
+ *       404:
+ *         description: Not found
+ *   delete:
+ *     tags: [order-management]
+ *     summary: Delete order
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Deleted
+ *       404:
+ *         description: Not found
+ */
 const createBody = z.object({ bookName: z.string(), author: z.string(), format: z.string(), userEmail: z.string().email().optional(), originalFileId: z.string().optional(), translatedFileId: z.string().optional() });
 
 ordersRouter.get('/order-management/orders', async (req, res, next) => {

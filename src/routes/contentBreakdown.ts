@@ -6,6 +6,34 @@ import { paginate } from '../lib/paging';
 
 export const contentBreakdownRouter = Router();
 
+/**
+ * @openapi
+ * /content-breakdown/{markdownId}:
+ *   post:
+ *     tags: [content-breakdown]
+ *     summary: Start content breakdown
+ *     parameters:
+ *       - in: path
+ *         name: markdownId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       201:
+ *         description: Created
+ *   get:
+ *     tags: [content-breakdown]
+ *     summary: List content breakdown rows
+ *     parameters:
+ *       - in: path
+ *         name: markdownId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List
+ */
 const postParams = z.object({ markdownId: z.string() });
 
 contentBreakdownRouter.post('/content-breakdown/:markdownId', validate({ params: postParams }), async (req, res, next) => {

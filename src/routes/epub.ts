@@ -9,6 +9,43 @@ import { paginate } from '../lib/paging';
 
 export const epubRouter = Router();
 
+/**
+ * @openapi
+ * /convert-to-epub/jobs:
+ *   post:
+ *     tags: [convert-to-epub]
+ *     summary: Create EPUB job
+ *     responses:
+ *       201:
+ *         description: Created
+ *   get:
+ *     tags: [convert-to-epub]
+ *     summary: List EPUB jobs
+ *     responses:
+ *       200:
+ *         description: List
+ * /convert-to-epub/jobs/{id}:
+ *   get:
+ *     tags: [convert-to-epub]
+ *     summary: Get EPUB job
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Job
+ *       404:
+ *         description: Not found
+ * /convert-to-epub/epubs:
+ *   get:
+ *     tags: [convert-to-epub]
+ *     summary: List EPUB outputs
+ *     responses:
+ *       200:
+ *         description: List
+ */
 const postBody = z.object({ inputMarkdownIds: z.array(z.string()) });
 
 epubRouter.post('/convert-to-epub/jobs', validate({ body: postBody }), async (req, res, next) => {

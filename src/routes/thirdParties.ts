@@ -7,6 +7,89 @@ import { paginate } from '../lib/paging';
 
 export const thirdPartiesRouter = Router();
 
+/**
+ * @openapi
+ * /third-parites/partners:
+ *   get:
+ *     tags: [third-parites]
+ *     summary: List partners
+ *     responses:
+ *       200:
+ *         description: List
+ *   post:
+ *     tags: [third-parites]
+ *     summary: Create partner
+ *     responses:
+ *       201:
+ *         description: Created
+ * /third-parites/partners/{partnerId}:
+ *   put:
+ *     tags: [third-parites]
+ *     summary: Update partner
+ *     parameters:
+ *       - in: path
+ *         name: partnerId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Updated
+ *       404:
+ *         description: Not found
+ *   delete:
+ *     tags: [third-parites]
+ *     summary: Delete partner
+ *     parameters:
+ *       - in: path
+ *         name: partnerId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Deleted
+ *       404:
+ *         description: Not found
+ * /third-parites/bookshelf:
+ *   get:
+ *     tags: [third-parites]
+ *     summary: List bookshelf entries
+ *     responses:
+ *       200:
+ *         description: List
+ *   post:
+ *     tags: [third-parites]
+ *     summary: Create bookshelf entry
+ *     responses:
+ *       201:
+ *         description: Created
+ * /third-parites/bookshelf/{shelfId}:
+ *   delete:
+ *     tags: [third-parites]
+ *     summary: Delete bookshelf entry
+ *     parameters:
+ *       - in: path
+ *         name: shelfId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Deleted
+ *       404:
+ *         description: Not found
+ * /third-parites/shipments:
+ *   get:
+ *     tags: [third-parites]
+ *     summary: List shipments
+ *     responses:
+ *       200:
+ *         description: List
+ *   post:
+ *     tags: [third-parites]
+ *     summary: Create shipment
+ *     responses:
+ *       201:
+ *         description: Created
+ */
 thirdPartiesRouter.get('/third-parites/partners', async (req, res, next) => {
   try {
     const all = await listPartners();

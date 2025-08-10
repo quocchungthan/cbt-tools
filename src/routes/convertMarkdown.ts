@@ -9,6 +9,44 @@ import { paginate } from '../lib/paging';
 
 export const convertMarkdownRouter = Router();
 
+/**
+ * @openapi
+ * /convert-markdown/jobs:
+ *   post:
+ *     tags: [convert-markdown]
+ *     summary: Create convert-markdown job
+ *     responses:
+ *       201:
+ *         description: Job created
+ *   get:
+ *     tags: [convert-markdown]
+ *     summary: List convert-markdown jobs
+ *     responses:
+ *       200:
+ *         description: List
+ * /convert-markdown/jobs/{jobId}:
+ *   get:
+ *     tags: [convert-markdown]
+ *     summary: Get convert-markdown job
+ *     parameters:
+ *       - in: path
+ *         name: jobId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Job
+ *       404:
+ *         description: Not found
+ * /convert-markdown/markdowns:
+ *   get:
+ *     tags: [convert-markdown]
+ *     summary: List converted markdowns
+ *     responses:
+ *       200:
+ *         description: List
+ */
 const postSchema = z.object({
   uploadId: z.string(),
   command: z.string().optional(),

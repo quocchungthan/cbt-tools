@@ -9,6 +9,76 @@ import { paginate } from '../lib/paging';
 
 export const apiSearchRouter = Router();
 
+/**
+ * @openapi
+ * /api-powered-search-file/search:
+ *   post:
+ *     tags: [api-powered-search-file]
+ *     summary: Start API-powered book file search
+ *     responses:
+ *       201:
+ *         description: Created
+ * /api-powered-search-file/searches:
+ *   get:
+ *     tags: [api-powered-search-file]
+ *     summary: List searches
+ *     responses:
+ *       200:
+ *         description: List
+ * /api-powered-search-file/searches/{searchId}:
+ *   get:
+ *     tags: [api-powered-search-file]
+ *     summary: Get search by id
+ *     parameters:
+ *       - in: path
+ *         name: searchId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Search
+ *       404:
+ *         description: Not found
+ * /api-powered-search-file/results:
+ *   get:
+ *     tags: [api-powered-search-file]
+ *     summary: List search results
+ *     parameters:
+ *       - in: query
+ *         name: searchId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: List
+ * /api-powered-search-file/downloads:
+ *   get:
+ *     tags: [api-powered-search-file]
+ *     summary: List downloads
+ *     responses:
+ *       200:
+ *         description: List
+ *   post:
+ *     tags: [api-powered-search-file]
+ *     summary: Create download task
+ *     responses:
+ *       201:
+ *         description: Created
+ * /api-powered-search-file/downloads/{downloadId}/file:
+ *   get:
+ *     tags: [api-powered-search-file]
+ *     summary: Get download file
+ *     parameters:
+ *       - in: path
+ *         name: downloadId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: File
+ *       404:
+ *         description: Not found
+ */
 const createBody = z.object({ bookName: z.string().optional(), orderId: z.string().optional(), requestedLangs: z.array(z.enum(['en','vi'])).optional(), maxResults: z.number().int().min(1).max(50).optional() });
 
 apiSearchRouter.post('/api-powered-search-file/search', validate({ body: createBody }), async (req, res, next) => {
