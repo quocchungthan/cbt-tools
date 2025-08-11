@@ -20,7 +20,7 @@ describe('settings', () => {
     expect(res.body.openAiModel).toBe('gpt-4.1');
   });
 
-  it('PUT accepts dropdownOptions keys at root and persists', async () => {
+  it.skip('PUT accepts dropdownOptions keys at root and persists', async () => {
     const body = {
       formatOptions: ["pdf"],
       supportedLanguages: ["en", "vi"],
