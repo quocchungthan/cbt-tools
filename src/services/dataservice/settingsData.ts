@@ -44,7 +44,7 @@ export async function getSettings(): Promise<Settings> {
   }
   // Also allow root-level composeFormats
   if (map.get('composeFormats')) {
-    try { result.composeFormats = JSON.parse(map.get('composeFormats') as string); } catch {}
+    try { result.composeFormats = JSON.parse(map.get('composeFormats') as string); } catch { /* empty */ }
   }
   return result;
 }
