@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  node:
+    build: .
+    image: cbt-tools-node:latest
+    environment:
+      - PORT=3000
+    volumes:
+      - database:/app/database
+    expose:
+      - "3000"
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - node
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+volumes:
+  database: {}

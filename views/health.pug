@@ -1,0 +1,16 @@
+extends layout
+
+block content
+  a(href='/') ← Back
+  h1 Health
+  .card
+    button#refresh Check Health
+    pre#output Loading…
+  script.
+    async function load() {
+      const res = await fetch('/api/health');
+      const data = await res.json();
+      document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    }
+    document.getElementById('refresh').addEventListener('click', load);
+    load();

@@ -33,6 +33,10 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(pinoHttp());
 
+  // View engine: Pug
+  app.set('views', path.resolve(process.cwd(), 'views'));
+  app.set('view engine', 'pug');
+
   // Rate limit mutating endpoints
   const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 100 });
   app.use(['/api/upload', '/api/settings', '/api/convert-markdown', '/api/translate', '/api/compose', '/api/convert-to-epub', '/api/send-mail', '/api/order-management', '/api/third-parites', '/api/api-powered-search-file'], limiter);
@@ -54,13 +58,19 @@ export function createApp() {
 
   app.use('/api', api);
 
-  // Serve static frontend
-  const publicDir = path.resolve(process.cwd(), 'public');
-  app.use(express.static(publicDir));
-
-  app.get('/', (_req, res) => {
-    res.sendFile(path.join(publicDir, 'index.html'));
-  });
+  // Frontend routes (Pug rendered)
+  app.get('/', (_req, res) => res.render('index'));
+  app.get('/health', (_req, res) => res.render('health'));
+  app.get('/settings', (_req, res) => res.render('settings'));
+  app.get('/upload', (_req, res) => res.render('upload'));
+  app.get('/convert-markdown', (_req, res) => res.render('convert-markdown'));
+  app.get('/translate', (_req, res) => res.render('translate'));
+  app.get('/compose', (_req, res) => res.render('compose'));
+  app.get('/epub', (_req, res) => res.render('epub'));
+  app.get('/mail', (_req, res) => res.render('mail'));
+  app.get('/orders', (_req, res) => res.render('orders'));
+  app.get('/third-parties', (_req, res) => res.render('third-parties'));
+  app.get('/search', (_req, res) => res.render('search'));
 
   app.use(errorHandler);
 

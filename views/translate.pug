@@ -1,0 +1,119 @@
+extends layout
+
+block content
+  a(href='/') ← Back
+  h1 Translate
+  .grid
+    .card
+      form#create-form
+        label Source Markdown ID
+          input(name='sourceMarkdownId', required, placeholder='markdownId')
+        label Target Lang
+          select(name='targetLang')
+            option(value='en') en
+            option(value='vi') vi
+        label Strategy
+          select(name='strategy')
+            option(value='whole-file') whole-file
+            option(value='sentence-by-sentence') sentence-by-sentence
+        button(type='submit') Create Translation
+        span#status
+    .card
+      h3 Jobs
+      button#refresh-jobs Refresh
+      table
+        thead
+          tr
+            th ID
+            th Source
+            th Lang
+            th Strategy
+            th Status
+            th Created
+        tbody#jobs
+    .card
+      h3 Translated Markdown
+      button#refresh-md Refresh
+      table
+        thead
+          tr
+            th Translation ID
+            th Source
+            th Lang
+            th Path
+            th Created
+        tbody#markdowns
+    .card
+      h3 Fine-tune Sentences
+      form#tune-load
+        label Translation ID
+          input(name='translationId', required)
+        button(type='submit') Load
+      form#tune-form(style='margin-top:.5rem; display:none;')
+        #sentences
+        button(type='submit') Save Updates
+        span#tune-status
+  script.
+    async function listJobs() {
+      const res = await fetch('/api/translate/jobs');
+      const data = await res.json();
+      document.getElementById('jobs').innerHTML = (data.items||[]).map(j => `<tr><td>${j.translationId}</td><td>${j.sourceMarkdownId}</td><td>${j.targetLang}</td><td>${j.strategy}</td><td>${j.status}</td><td>${new Date(j.createdAt).toLocaleString()}</td></tr>`).join('');
+    }
+    async function listMarkdowns() {
+      const res = await fetch('/api/translate/markdowns');
+      const data = await res.json();
+      document.getElementById('markdowns').innerHTML = (data.items||[]).map(m => `<tr><td>${m.translationId}</td><td>${m.sourceMarkdownId}</td><td>${m.targetLang}</td><td>${m.path}</td><td>${new Date(m.createdAt).toLocaleString()}</td></tr>`).join('');
+    }
+    document.getElementById('refresh-jobs').addEventListener('click', listJobs);
+    document.getElementById('refresh-md').addEventListener('click', listMarkdowns);
+    document.getElementById('create-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const body = Object.fromEntries(fd.entries());
+      document.getElementById('status').textContent = 'Creating…';
+      try {
+        const res = await fetch('/api/translate/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error('Create failed');
+        await res.json();
+        document.getElementById('status').textContent = 'Created';
+        await listJobs();
+        await listMarkdowns();
+      } catch (err) {
+        document.getElementById('status').textContent = '';
+        alert(err.message || 'Error creating translation');
+      }
+    });
+    document.getElementById('tune-load').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = new FormData(e.target).get('translationId');
+      const res = await fetch(`/api/translation-fine-tune/${id}`);
+      if (!res.ok) { alert('Not found'); return; }
+      const data = await res.json();
+      const container = document.getElementById('sentences');
+      container.innerHTML = (data.items||[]).map(s => `
+        <div style='margin-bottom:.5rem;'>
+          <div><strong>${s.sentenceId}</strong> — ${s.originalText || ''}</div>
+          <textarea name="${s.sentenceId}" rows="2">${s.translatedText || ''}</textarea>
+        </div>
+      `).join('');
+      document.getElementById('tune-form').style.display = 'block';
+      document.getElementById('tune-form').dataset.translationId = id;
+    });
+    document.getElementById('tune-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = e.target.dataset.translationId;
+      const fields = Array.from(e.target.querySelectorAll('textarea'));
+      const body = fields.map(f => ({ sentenceId: f.name, translatedText: f.value }));
+      document.getElementById('tune-status').textContent = 'Saving…';
+      try {
+        const res = await fetch(`/api/translation-fine-tune/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error('Update failed');
+        await res.json();
+        document.getElementById('tune-status').textContent = 'Saved';
+      } catch (err) {
+        document.getElementById('tune-status').textContent = '';
+        alert(err.message || 'Error updating');
+      }
+    });
+    listJobs();
+    listMarkdowns();
