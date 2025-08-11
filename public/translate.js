@@ -9,6 +9,38 @@ document.addEventListener('DOMContentLoaded', function () {
     const data = await res.json();
     document.getElementById('markdowns').innerHTML = (data.items||[]).map(m => `<tr><td>${m.translationId}</td><td>${m.sourceMarkdownId}</td><td>${m.targetLang}</td><td>${m.path}</td><td>${new Date(m.createdAt).toLocaleString()}</td></tr>`).join('');
   }
+
+  async function populateDropdowns() {
+    // Source Markdown
+    const sourceSelect = document.getElementById('sourceMarkdownId');
+    if (sourceSelect) {
+      try {
+        const res = await fetch('/api/convert-markdown/markdowns');
+        const data = await res.json();
+        const items = data.items || [];
+        sourceSelect.innerHTML = '<option value="">Select source markdown…</option>';
+        for (const item of items) {
+          const opt = document.createElement('option');
+          opt.value = item.markdownId || item.id || item._id || item.path;
+          opt.textContent = `${item.markdownId || item.id || item._id || item.path}`;
+          sourceSelect.appendChild(opt);
+        }
+      } catch {}
+    }
+    // Target Language
+    const langSelect = document.getElementById('targetLang');
+    if (langSelect) {
+      const langs = ['en', 'vi', 'fr', 'es', 'de', 'zh', 'ja', 'ko'];
+      langSelect.innerHTML = '<option value="">Select language…</option>' + langs.map(l => `<option value="${l}">${l}</option>`).join('');
+    }
+    // Strategy
+    const strategySelect = document.getElementById('strategy');
+    if (strategySelect) {
+      const strategies = ['default', 'gpt-4', 'deepl', 'google', 'custom'];
+      strategySelect.innerHTML = '<option value="">Select strategy…</option>' + strategies.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+  }
+
   document.getElementById('refresh-jobs').addEventListener('click', listJobs);
   document.getElementById('refresh-md').addEventListener('click', listMarkdowns);
   document.getElementById('create-form').addEventListener('submit', async (e) => {
@@ -30,4 +62,5 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   listJobs();
   listMarkdowns();
+  populateDropdowns();
 });

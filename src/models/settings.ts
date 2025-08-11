@@ -8,4 +8,7 @@ export type Settings = {
   sheetName?: string;
   sheetId?: string;
   dropdownOptions?: Record<string, string[]>;
+  formatOptions?: string[];
+  supportedLanguages?: string[];
+  translateStrategy?: string[];
 };

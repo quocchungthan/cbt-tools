@@ -3,6 +3,20 @@ extends layout
 block content
   +back()
   .card
+    h3 New Translation Job
+    form#create-form
+      label Source Markdown
+        select(name='sourceMarkdownId', id='sourceMarkdownId', required)
+          option(value='') Select source markdown…
+      label Target Language
+        select(name='targetLang', id='targetLang', required)
+          option(value='') Select language…
+      label Strategy
+        select(name='strategy', id='strategy')
+          option(value='') Select strategy…
+      button(type='submit') Create Job
+      span#status
+  .card
     h3 Jobs
     button#refresh-jobs Refresh
     table

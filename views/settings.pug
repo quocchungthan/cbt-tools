@@ -12,8 +12,8 @@ block content
     +field('Sheet API Key', 'sheetApiKey')
     +field('Sheet Name', 'sheetName')
     +field('Sheet Id', 'sheetId')
-    label Dropdown Options (JSON: { "formatOptions": ["pdf","epub"], ... })
-      textarea(name='dropdownOptions' rows='6' placeholder='{ "formatOptions": ["pdf","epub"] }')
+    label Dropdown Options (JSON: { "formatOptions": ["pdf"], "supportedLanguages": ["en", "vi"], "translateStrategy": ["sentence-by-sentence", "full-book-at-once"] })
+      textarea(name='dropdownOptions' rows='6' placeholder='{ "formatOptions": ["pdf"], "supportedLanguages": ["en", "vi"], "translateStrategy": ["sentence-by-sentence", "full-book-at-once"] }')
     .row
       button#save(type='submit') Save
       span#status.muted

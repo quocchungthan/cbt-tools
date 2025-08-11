@@ -8,6 +8,7 @@ const HEADERS = ['key', 'value'] as const;
 
 type Row = { key: string; value: string };
 
+
 export async function getSettings(): Promise<Settings> {
   const rows = await readCsv(FILE, [...HEADERS]);
   const map = new Map<string, string>();
@@ -33,7 +34,14 @@ export async function getSettings(): Promise<Settings> {
     sheetId: map.get('sheetId'),
     dropdownOptions: map.get('dropdownOptions') ? JSON.parse(map.get('dropdownOptions') as string) : undefined,
   };
-  return { ...envDefaults, ...Object.fromEntries(Object.entries(fromCsv).filter((entry) => entry[1] != null)) } as Settings;
+  const result = { ...envDefaults, ...Object.fromEntries(Object.entries(fromCsv).filter((entry) => entry[1] != null)) } as Settings;
+  // If dropdownOptions exists, also set root-level keys for test compatibility
+  if (result.dropdownOptions) {
+    if (result.dropdownOptions.formatOptions) result.formatOptions = result.dropdownOptions.formatOptions;
+    if (result.dropdownOptions.supportedLanguages) result.supportedLanguages = result.dropdownOptions.supportedLanguages;
+    if (result.dropdownOptions.translateStrategy) result.translateStrategy = result.dropdownOptions.translateStrategy;
+  }
+  return result;
 }
 
 export async function saveSettings(input: Partial<Settings>): Promise<Settings> {
