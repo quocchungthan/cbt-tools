@@ -41,14 +41,4 @@ block content
           th Path
           th Created
       tbody#markdowns
-  .card
-    h3 Fine-tune Sentences
-    form#tune-load
-      label Translation ID
-        input(name='translationId', required)
-      button(type='submit') Load
-    form#tune-form(style='margin-top:.5rem; display:none;')
-      #sentences
-      button(type='submit') Save Updates
-      span#tune-status
   script(src='/assets/translate.js')

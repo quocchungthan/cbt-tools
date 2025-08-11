@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', function () {
+  // Populate translationId dropdown from /api/translate/jobs
+  async function populateTranslationIdDropdown() {
+    const select = document.getElementById('translationId');
+    if (!select) return;
+    try {
+      const res = await fetch('/api/translate/jobs');
+      if (!res.ok) return;
+      const data = await res.json();
+      const items = data.items || (Array.isArray(data) ? data : []);
+      select.innerHTML = '<option value="">Select translation…</option>';
+      for (const item of items) {
+        const opt = document.createElement('option');
+        opt.value = item.translationId || item.id || item._id;
+        opt.textContent = `${item.translationId || item.id || item._id} (${item.sourceMarkdownId || ''} → ${item.targetLang || ''})`;
+        select.appendChild(opt);
+      }
+    } catch {}
+  }
+  populateTranslationIdDropdown();
   async function loadSentences(id) {
     const res = await fetch(`/api/translation-fine-tune/${id}`);
     if (!res.ok) { alert('Not found'); return; }

@@ -27,16 +27,25 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } catch {}
     }
+    // Fetch settings for languages and strategies
+    let langs = ['en', 'vi'];
+    let strategies = ['default', 'gpt-4', 'deepl', 'google', 'custom'];
+    try {
+      const res = await fetch('/api/settings/');
+      if (res.ok) {
+        const settings = await res.json();
+        if (Array.isArray(settings.supportedLanguages)) langs = settings.supportedLanguages;
+        if (Array.isArray(settings.translateStrategy)) strategies = settings.translateStrategy;
+      }
+    } catch {}
     // Target Language
     const langSelect = document.getElementById('targetLang');
     if (langSelect) {
-      const langs = ['en', 'vi', 'fr', 'es', 'de', 'zh', 'ja', 'ko'];
       langSelect.innerHTML = '<option value="">Select language…</option>' + langs.map(l => `<option value="${l}">${l}</option>`).join('');
     }
     // Strategy
     const strategySelect = document.getElementById('strategy');
     if (strategySelect) {
-      const strategies = ['default', 'gpt-4', 'deepl', 'google', 'custom'];
       strategySelect.innerHTML = '<option value="">Select strategy…</option>' + strategies.map(s => `<option value="${s}">${s}</option>`).join('');
     }
   }
