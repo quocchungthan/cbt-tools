@@ -1,7 +1,7 @@
 extends layout
 
 block content
-  a(href='/') ← Back
+  +back()
   h1 Settings
   form#form
     +field('File Supported (.ext)', 'fileSupported', 'text', '.pdf')

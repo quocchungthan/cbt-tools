@@ -1,3 +1,19 @@
+.back-link {
+  padding: 18px 0 18px 0;
+  margin-bottom: 12px;
+  display: block;
+}
+.back-link a {
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 1.08em;
+  transition: color 0.2s;
+}
+.back-link a:hover, .back-link a:focus {
+  color: var(--primary-600);
+  text-decoration: underline;
+}
 :root {
   --bg: #0f1117;
   --panel: #111827;
@@ -45,6 +61,8 @@ body {
   background: var(--panel);
   border-right: 1px solid var(--border);
   padding: 32px 16px 16px 16px;
+  padding-top: 0;
+  padding-bottom: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -112,14 +130,67 @@ input, select, textarea {
 
 label { display: grid; gap: 6px; margin: 8px 0; }
 
-.table {
+
+table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--panel);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.table th, .table td {
+th, td {
   text-align: left;
-  padding: 8px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border);
+}
+th {
+  background: #181c2a;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 1em;
+}
+tr:last-child td {
+  border-bottom: none;
+}
+tr:hover td {
+  background: rgba(124,58,237,0.07);
+  transition: background 0.2s;
+}
+
+/* Card and container spacing */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 20px 20px 20px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 0;
+  padding-right: 40px;
+  padding-bottom: 0;
+  padding-left: 40px;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+  gap: 32px;
+}
+
+form, h3, h1, table, .card {
+  margin-bottom: 20px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
 }
 
 .muted { color: var(--muted); }
