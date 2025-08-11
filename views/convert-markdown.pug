@@ -18,20 +18,19 @@ block content
       thead
         tr
           th Job ID
-          script(src='/assets/convert-markdown.js')
-      const body = { uploadId: fd.get('uploadId'), command: fd.get('command') || undefined };
-      document.getElementById('status').textContent = 'Creating…';
-      try {
-        const res = await fetch('/api/convert-markdown/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (!res.ok) throw new Error('Create failed');
-        await res.json();
-        document.getElementById('status').textContent = 'Created';
-        await listJobs();
-        await listMarkdowns();
-      } catch (err) {
-        document.getElementById('status').textContent = '';
-        alert(err.message || 'Error creating job');
-      }
-    });
-    listJobs();
-    listMarkdowns();
+          th Upload ID
+          th Command
+          th Status
+          th Created
+      tbody#jobs
+  .card
+    h3 Markdowns
+    table
+      thead
+        tr
+          th Markdown ID
+          th Job ID
+          th Path
+          th Created
+      tbody#markdowns
+  script(src='/assets/convert-markdown.js')

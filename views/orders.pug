@@ -7,30 +7,26 @@ block content
     form#create-form
       label Book Name
         input(name='bookName', required)
-      script(src='/assets/orders.js')
-        if (!confirm('Delete order '+id+'?')) return;
-        const res = await fetch(`/api/order-management/orders/${id}`, { method: 'DELETE' });
-        if (res.ok) listOrders(); else alert('Delete failed');
-      }));
-    }
-    document.getElementById('refresh').addEventListener('click', listOrders);
-    document.getElementById('create-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const body = Object.fromEntries(fd.entries());
-      if (!body.userEmail) delete body.userEmail;
-      if (!body.originalFileId) delete body.originalFileId;
-      if (!body.translatedFileId) delete body.translatedFileId;
-      document.getElementById('status').textContent = 'Creating…';
-      try {
-        const res = await fetch('/api/order-management/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (!res.ok) throw new Error('Create failed');
-        await res.json();
-        document.getElementById('status').textContent = 'Created';
-        await listOrders();
-      } catch (err) {
-        document.getElementById('status').textContent = '';
-        alert(err.message || 'Error creating order');
-      }
-    });
-    listOrders();
+      label User Email
+        input(name='userEmail')
+      label Original File ID
+        input(name='originalFileId')
+      label Translated File ID
+        input(name='translatedFileId')
+      button(type='submit') Create Order
+      span#status
+  .card
+    button#refresh Refresh
+    table
+      thead
+        tr
+          th Order ID
+          th Book Name
+          th User Email
+          th Original File ID
+          th Translated File ID
+          th Status
+          th Created
+          th Actions
+      tbody#orders
+  script(src='/assets/orders.js')
