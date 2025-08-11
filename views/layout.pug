@@ -7,9 +7,9 @@ html(lang="en")
     include _components.pug
     link(rel='stylesheet', href='/assets/theme.css')
   body
-    .container
-      header
-        h1(style="margin:0") CBT Tools
+    .layout
+      .sidebar
+        h1 CBT Tools
         nav
           a(href='/') Home
           a(href='/health') Health
@@ -25,4 +25,5 @@ html(lang="en")
           a(href='/third-parties') Third Parties
           a(href='/search') API Search
           a(href='/api/docs', target='_blank', rel='noreferrer') Swagger
-      block content
+      .main-content
+        block content

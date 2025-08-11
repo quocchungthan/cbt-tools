@@ -40,6 +40,11 @@ export function createApp() {
   // Static assets (theme CSS/JS)
   app.use('/assets', express.static(path.resolve(process.cwd(), 'public')));
 
+  // Serve favicon.ico
+  app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.resolve(process.cwd(), 'public', 'favicon.ico'));
+  });
+
   // Rate limit mutating endpoints
   const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 100 });
   app.use(['/api/upload', '/api/settings', '/api/convert-markdown', '/api/translate', '/api/compose', '/api/convert-to-epub', '/api/send-mail', '/api/order-management', '/api/third-parites', '/api/api-powered-search-file'], limiter);
