@@ -6,7 +6,7 @@ RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
 COPY views ./views
-COPY .env.example ./.env.example || true
+# .env.example is not required at build time; omit to avoid optional copy errors
 RUN npm run build
 
 # Runtime stage
