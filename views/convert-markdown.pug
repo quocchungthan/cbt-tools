@@ -6,7 +6,8 @@ block content
   .card
     form#create-form
       label Upload ID
-        input(name='uploadId', required, placeholder='paste uploadId')
+        select(name='uploadId', id='uploadId', required)
+          option(value='') Select upload…
       label Command
         input(name='command', placeholder='optional')
       button(type='submit') Create Job
