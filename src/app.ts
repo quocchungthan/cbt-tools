@@ -67,19 +67,20 @@ export function createApp() {
   app.use('/api', api);
 
   // Frontend routes (Pug rendered)
-  app.get('/', (_req, res) => res.render('index'));
-  app.get('/health', (_req, res) => res.render('health'));
-  app.get('/settings', (_req, res) => res.render('settings'));
-  app.get('/upload', (_req, res) => res.render('upload'));
-  app.get('/convert-markdown', (_req, res) => res.render('convert-markdown'));
-  app.get('/translate', (_req, res) => res.render('translate'));
-  app.get('/translation-fine-tune', (_req, res) => res.render('fine-tune'));
-  app.get('/compose', (_req, res) => res.render('compose'));
-  app.get('/epub', (_req, res) => res.render('epub'));
-  app.get('/mail', (_req, res) => res.render('mail'));
-  app.get('/orders', (_req, res) => res.render('orders'));
-  app.get('/third-parties', (_req, res) => res.render('third-parties'));
-  app.get('/search', (_req, res) => res.render('search'));
+  app.get('/tools', (_req, res) => res.render('index'));
+  app.get('/tools/', (_req, res) => res.render('index'));
+  app.get('/tools/health', (_req, res) => res.render('health'));
+  app.get('/tools/settings', (_req, res) => res.render('settings'));
+  app.get('/tools/upload', (_req, res) => res.render('upload'));
+  app.get('/tools/convert-markdown', (_req, res) => res.render('convert-markdown'));
+  app.get('/tools/translate', (_req, res) => res.render('translate'));
+  app.get('/tools/translation-fine-tune', (_req, res) => res.render('fine-tune'));
+  app.get('/tools/compose', (_req, res) => res.render('compose'));
+  app.get('/tools/epub', (_req, res) => res.render('epub'));
+  app.get('/tools/mail', (_req, res) => res.render('mail'));
+  app.get('/tools/orders', (_req, res) => res.render('orders'));
+  app.get('/tools/third-parties', (_req, res) => res.render('third-parties'));
+  app.get('/tools/search', (_req, res) => res.render('search'));
 
   app.use(errorHandler);
 
