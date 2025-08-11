@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', function () {
       for (const item of items) {
         const opt = document.createElement('option');
         opt.value = item.translationId || item.id || item._id;
-        opt.textContent = `${item.translationId || item.id || item._id} (${item.sourceMarkdownId || ''} → ${item.targetLang || ''})`;
+        opt.textContent = item.originalFilename
+          ? `${item.originalFilename} (${item.translationId || item.id || item._id})`
+          : `${item.translationId || item.id || item._id} (${item.sourceMarkdownId || ''} → ${item.targetLang || ''})`;
         select.appendChild(opt);
       }
     } catch {}

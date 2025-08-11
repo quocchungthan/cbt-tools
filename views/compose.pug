@@ -5,14 +5,15 @@ block content
   h1 Compose
   .card
     form#create-form
-      label Input Markdown IDs (comma separated)
-        input(name='inputMarkdownIds', required)
-      label Format
-        select(name='format', id='format-select')
-          option(value='side-by-side') side-by-side
-          option(value='paragraph-by-paragraph') paragraph-by-paragraph
-          option(value='sentence-by-sentence') sentence-by-sentence
-          option(value='translated-only') translated-only
+      label(for='inputMarkdownId1') Input Markdown ID 1 (required)
+      select(name='inputMarkdownId1' id='inputMarkdownId1' required)
+        option(value='') Select markdown…
+      label(for='inputMarkdownId2') Input Markdown ID 2 (optional)
+      select(name='inputMarkdownId2' id='inputMarkdownId2')
+        option(value='') None
+      label(for='format-select') Format
+      select(name='format' id='format-select' required)
+        option(value='') Select format…
       button(type='submit') Create Compose Job
       span#status
   .card

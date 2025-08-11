@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', function () {
+  // Populate markdown ID dropdowns from /api/translate/jobs
+  async function populateMarkdownDropdowns() {
+    try {
+      const res = await fetch('/api/translate/jobs');
+      if (!res.ok) return;
+      const data = await res.json();
+      const items = data.items || (Array.isArray(data) ? data : []);
+      const opts = items.map(item => {
+        const label = item.originalFilename
+          ? `${item.originalFilename} (${item.translationId || item.id || item._id})`
+          : `${item.translationId || item.id || item._id} (${item.sourceMarkdownId || ''} → ${item.targetLang || ''})`;
+        return `<option value="${item.translationId || item.id || item._id}">${label}</option>`;
+      }).join('');
+      const sel1 = document.getElementById('inputMarkdownId1');
+      const sel2 = document.getElementById('inputMarkdownId2');
+      if (sel1) sel1.innerHTML = '<option value="">Select markdown…</option>' + opts;
+      if (sel2) sel2.innerHTML = '<option value="">None</option>' + opts;
+    } catch {}
+  }
   async function applyFormatOptions() {
     try {
       const res = await fetch('/api/settings/');
@@ -25,7 +44,12 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('create-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const body = { inputMarkdownIds: fd.get('inputMarkdownIds'), format: fd.get('format') };
+    const id1 = fd.get('inputMarkdownId1');
+    const id2 = fd.get('inputMarkdownId2');
+    const inputMarkdownIds = [];
+    if (id1) inputMarkdownIds.push(id1);
+    if (id2) inputMarkdownIds.push(id2);
+    const body = { inputMarkdownIds, format: fd.get('format') };
     document.getElementById('status').textContent = 'Creating…';
     try {
       const res = await fetch('/api/compose/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -40,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
   applyFormatOptions();
+  populateMarkdownDropdowns();
   listJobs();
   listMarkdowns();
 });

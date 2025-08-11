@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { validate } from '../middleware/validate';
 import { addTranslation, getTranslation, listSentences, listTranslations, initSentenceRows, upsertSentences } from '../services/dataservice/translateData';
+import { getMarkdownById } from '../services/dataservice/markdownsData';
+import { getUploadById } from '../services/dataservice/uploadsData';
+import { listJobs } from '../services/dataservice/convertMarkdownData';
 import { paginate } from '../lib/paging';
 import { getSettings } from '../services/dataservice/settingsData';
 
@@ -101,7 +104,21 @@ translateRouter.post('/translate/jobs', async (req, res, next) => {
 translateRouter.get('/translate/jobs', async (req, res, next) => {
   try {
     const all = await listTranslations();
-    const envelope = paginate(all, req.query as any, 'createdAt');
+    const convertJobs = await listJobs();
+    // For each translation, try to get the original filename
+    const jobsWithFilename = await Promise.all(all.map(async t => {
+      let originalFilename = '';
+      // Get markdown record by sourceMarkdownId
+      const job = await getMarkdownById(t.sourceMarkdownId);
+	  const findUploadId = convertJobs.find(j => j.jobId === job?.jobId)?.uploadId;
+      if (findUploadId) {
+        // Try to get upload record by markdownId (if markdownId is uploadId)
+        const upload = await getUploadById(findUploadId);
+        if (upload) originalFilename = upload.filename;
+      }
+      return { ...t, originalFilename };
+    }));
+    const envelope = paginate(jobsWithFilename, req.query as any, 'createdAt');
     res.json(envelope);
   } catch (e) { next(e); }
 });
