@@ -4,22 +4,16 @@ block content
   a(href='/') ← Back
   h1 Settings
   form#form
-    label File Supported (.ext)
-      input(name='fileSupported' placeholder='.pdf')
-    label OpenAI Key
-      input(name='openAiKey')
-    label OpenAI Model
-      input(name='openAiModel')
-    label OpenAI Project Id
-      input(name='openAiProjectId')
-    label OpenAI Org Id
-      input(name='openAiOrgId')
-    label Sheet API Key
-      input(name='sheetApiKey')
-    label Sheet Name
-      input(name='sheetName')
-    label Sheet Id
-      input(name='sheetId')
+    +field('File Supported (.ext)', 'fileSupported', 'text', '.pdf')
+    +field('OpenAI Key', 'openAiKey')
+    +field('OpenAI Model', 'openAiModel')
+    +field('OpenAI Project Id', 'openAiProjectId')
+    +field('OpenAI Org Id', 'openAiOrgId')
+    +field('Sheet API Key', 'sheetApiKey')
+    +field('Sheet Name', 'sheetName')
+    +field('Sheet Id', 'sheetId')
+    label Dropdown Options (JSON: { "formatOptions": ["pdf","epub"], ... })
+      textarea(name='dropdownOptions' rows='6' placeholder='{ "formatOptions": ["pdf","epub"] }')
     .row
       button#save(type='submit') Save
       span#status.muted
@@ -27,12 +21,15 @@ block content
     strong Raw
     pre#raw
   script.
+    function safeParse(json){ try { return JSON.parse(json); } catch { return undefined; } }
     async function load() {
       const res = await fetch('/api/settings/');
       const data = await res.json();
       for (const [k, v] of Object.entries(data)) {
         const el = document.querySelector(`[name="${k}"]`);
-        if (el) el.value = v ?? '';
+        if (!el) continue;
+        if (k === 'dropdownOptions') el.value = JSON.stringify(v || {}, null, 2);
+        else el.value = v ?? '';
       }
       document.getElementById('raw').textContent = JSON.stringify(data, null, 2);
     }
@@ -40,7 +37,15 @@ block content
       e.preventDefault();
       const fd = new FormData(e.target);
       const body = {};
-      for (const [k, v] of fd.entries()) if (v) body[k] = v;
+      for (const [k, v] of fd.entries()) {
+        if (!v) continue;
+        if (k === 'dropdownOptions') {
+          const parsed = safeParse(String(v));
+          if (parsed) body[k] = parsed;
+        } else {
+          body[k] = v;
+        }
+      }
       document.getElementById('save').disabled = true;
       document.getElementById('status').textContent = 'Saving…';
       try {

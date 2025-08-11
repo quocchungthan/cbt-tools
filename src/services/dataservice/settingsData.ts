@@ -31,6 +31,7 @@ export async function getSettings(): Promise<Settings> {
     sheetApiKey: map.get('sheetApiKey'),
     sheetName: map.get('sheetName'),
     sheetId: map.get('sheetId'),
+    dropdownOptions: map.get('dropdownOptions') ? JSON.parse(map.get('dropdownOptions') as string) : undefined,
   };
   return { ...envDefaults, ...Object.fromEntries(Object.entries(fromCsv).filter((entry) => entry[1] != null)) } as Settings;
 }
@@ -40,7 +41,7 @@ export async function saveSettings(input: Partial<Settings>): Promise<Settings> 
   const next: Settings = { ...current, ...input };
   const rows: Row[] = Object.entries(next)
     .filter((entry) => entry[1] !== undefined)
-    .map(([key, value]) => ({ key, value: String(value) }));
+    .map(([key, value]) => ({ key, value: key === 'dropdownOptions' ? JSON.stringify(value) : String(value) }));
   await writeCsv(FILE, [...HEADERS], rows as any);
   return next;
 }

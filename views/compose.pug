@@ -8,7 +8,7 @@ block content
       label Input Markdown IDs (comma separated)
         input(name='inputMarkdownIds', required)
       label Format
-        select(name='format')
+        select(name='format', id='format-select')
           option(value='side-by-side') side-by-side
           option(value='paragraph-by-paragraph') paragraph-by-paragraph
           option(value='sentence-by-sentence') sentence-by-sentence
@@ -39,6 +39,17 @@ block content
           th Created
       tbody#markdowns
   script.
+    async function applyFormatOptions() {
+      try {
+        const res = await fetch('/api/settings/');
+        const data = await res.json();
+        const opts = data.dropdownOptions && data.dropdownOptions.formatOptions;
+        if (Array.isArray(opts) && opts.length) {
+          const sel = document.getElementById('format-select');
+          sel.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+        }
+      } catch {}
+    }
     async function listJobs() {
       const res = await fetch('/api/compose/jobs');
       const data = await res.json();
@@ -68,5 +79,6 @@ block content
         alert(err.message || 'Error creating compose job');
       }
     });
+    applyFormatOptions();
     listJobs();
     listMarkdowns();
