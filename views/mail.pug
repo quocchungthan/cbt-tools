@@ -2,42 +2,7 @@ extends layout
 
 block content
   a(href='/') ← Back
-  h1 Send Mail
-  .card
-    form#create-form
-      label Email
-        input(type='email', name='email', required)
-      label Template
-        select(name='template')
-          option(value='thank-you') thank-you
-          option(value='delay') delay
-          option(value='book-ready') book-ready
-      label EPUB Path (optional)
-        input(name='epubPath', placeholder='database/epubs/.../output.epub')
-      button(type='submit') Queue Mail
-      span#status
-  .card
-    h3 Mail Jobs
-    button#refresh-jobs Refresh
-    table
-      thead
-        tr
-          th Job ID
-          th Email
-          th Template
-          th Status
-          th Created
-      tbody#jobs
-  .card
-    h3 Known Emails
-    form#emails-form
-      input(name='q', placeholder='search prefix')
-      button(type='submit') Search
-    table
-      thead
-        tr
-          th Email
-          th Last Used
+  script(src='/assets/mail.js')
           th Count
       tbody#emails
   script.

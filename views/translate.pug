@@ -2,38 +2,7 @@ extends layout
 
 block content
   a(href='/') ← Back
-  h1 Translate
-  .grid
-    .card
-      form#create-form
-        label Source Markdown ID
-          input(name='sourceMarkdownId', required, placeholder='markdownId')
-        label Target Lang
-          select(name='targetLang')
-            option(value='en') en
-            option(value='vi') vi
-        label Strategy
-          select(name='strategy')
-            option(value='whole-file') whole-file
-            option(value='sentence-by-sentence') sentence-by-sentence
-        button(type='submit') Create Translation
-        span#status
-    .card
-      h3 Jobs
-      button#refresh-jobs Refresh
-      table
-        thead
-          tr
-            th ID
-            th Source
-            th Lang
-            th Strategy
-            th Status
-            th Created
-        tbody#jobs
-    .card
-      h3 Translated Markdown
-      button#refresh-md Refresh
+  script(src='/assets/translate.js')
       table
         thead
           tr

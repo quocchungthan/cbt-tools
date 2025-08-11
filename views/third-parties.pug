@@ -5,36 +5,7 @@ block content
   h1 Third Parties
   .grid
     .card
-      h3 Partners
-      form#partner-form
-        label Type
-          select(name='type')
-            option(value='print') print
-            option(value='ads') ads
-            option(value='bookshelf') bookshelf
-            option(value='shipping') shipping
-        label Name
-          input(name='name', required)
-        label Endpoint
-          input(name='endpoint')
-        label Contact
-          input(name='contact')
-        button(type='submit') Create Partner
-      button#partners-refresh Refresh
-      table
-        thead
-          tr
-            th ID
-            th Type
-            th Name
-            th Endpoint
-            th Contact
-            th Created
-        tbody#partners
-    .card
-      h3 Bookshelf
-      form#shelf-form
-        label Title
+      script(src='/assets/third-parties.js')
           input(name='title', required)
         label Composed Markdown Path
           input(name='composedMarkdownPath', required)

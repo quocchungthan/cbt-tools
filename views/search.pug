@@ -14,54 +14,7 @@ block content
           select(name='langs', multiple, size='2')
             option(value='en') en
             option(value='vi') vi
-        label Max Results
-          input(type='number', name='maxResults', min='1', max='50', value='10')
-        button(type='submit') Create Search
-        span#status
-    .card
-      h3 Searches
-      button#refresh-searches Refresh
-      table
-        thead
-          tr
-            th ID
-            th Query
-            th Source
-            th Langs
-            th Status
-            th Created
-        tbody#searches
-    .card
-      h3 Results
-      form#results-load
-        label Search ID
-          input(name='searchId', required)
-        button(type='submit') Load Results
-      table
-        thead
-          tr
-            th ID
-            th Title
-            th URL
-            th Type
-            th Lang
-            th Free
-            th Price
-            th Rank
-            th
-        tbody#results
-    .card
-      h3 Downloads
-      button#refresh-downloads Refresh
-      table
-        thead
-          tr
-            th ID
-            th Result
-            th Filename
-            th Path
-            th Created
-            th File
+        script(src='/assets/search.js')
         tbody#downloads
   script.
     async function listSearches() {

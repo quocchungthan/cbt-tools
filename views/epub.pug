@@ -7,50 +7,7 @@ block content
     form#create-form
       label Input Markdown IDs (comma separated)
         input(name='inputMarkdownIds', required)
-      label Input Type
-        select(name='inputType', id='input-type-select')
-          option(value='markdownIds') markdownIds
-      button(type='submit') Create EPUB Job
-      span#status
-  .card
-    h3 Jobs
-    button#refresh-jobs Refresh
-    table
-      thead
-        tr
-          th Job ID
-          th Inputs
-          th Status
-          th Output Path
-          th Created
-      tbody#jobs
-  .card
-    h3 EPUB Outputs
-    button#refresh-epubs Refresh
-    table
-      thead
-        tr
-          th Job ID
-          th Path
-          th Created
-      tbody#epubs
-  script.
-    async function applyDropdowns() {
-      try {
-        const res = await fetch('/api/settings/');
-        const data = await res.json();
-        const opts = data.dropdownOptions && data.dropdownOptions.inputTypeOptions;
-        if (Array.isArray(opts) && opts.length) {
-          const sel = document.getElementById('input-type-select');
-          sel.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
-        }
-      } catch {}
-    }
-    async function listJobs() {
-      const res = await fetch('/api/convert-to-epub/jobs');
-      const data = await res.json();
-      document.getElementById('jobs').innerHTML = (data.items||[]).map(j => `<tr><td>${j.jobId}</td><td>${(j.inputs||[]).join(', ')}</td><td>${j.status}</td><td>${j.outputPath||''}</td><td>${new Date(j.createdAt).toLocaleString()}</td></tr>`).join('');
-    }
+      script(src='/assets/epub.js')
     async function listEpubs() {
       const res = await fetch('/api/convert-to-epub/epubs');
       const data = await res.json();

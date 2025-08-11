@@ -6,11 +6,4 @@ block content
   .card
     button#refresh Check Health
     pre#output Loading…
-  script.
-    async function load() {
-      const res = await fetch('/api/health');
-      const data = await res.json();
-      document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-    }
-    document.getElementById('refresh').addEventListener('click', load);
-    load();
+  script(src='/assets/health.js')
