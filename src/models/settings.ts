@@ -7,4 +7,9 @@ export type Settings = {
   sheetApiKey?: string;
   sheetName?: string;
   sheetId?: string;
+  dropdownOptions?: Record<string, string[]>;
+  formatOptions?: string[];
+  supportedLanguages?: string[];
+  translateStrategy?: string[];
+  composeFormats?: string[];
 };

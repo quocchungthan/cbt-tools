@@ -18,6 +18,7 @@ import { mailRouter } from './routes/mail';
 import { ordersRouter } from './routes/orders';
 import { thirdPartiesRouter } from './routes/thirdParties';
 import { apiSearchRouter } from './routes/apiPoweredSearch';
+import path from 'node:path';
 
 export function createApp() {
   const app = express();
@@ -31,6 +32,18 @@ export function createApp() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(pinoHttp());
+
+  // View engine: Pug
+  app.set('views', path.resolve(process.cwd(), 'views'));
+  app.set('view engine', 'pug');
+
+  // Static assets (theme CSS/JS)
+  app.use('/assets', express.static(path.resolve(process.cwd(), 'public')));
+
+  // Serve favicon.ico
+  app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.resolve(process.cwd(), 'public', 'favicon.ico'));
+  });
 
   // Rate limit mutating endpoints
   const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 100 });
@@ -52,6 +65,21 @@ export function createApp() {
   api.use(apiSearchRouter);
 
   app.use('/api', api);
+
+  // Frontend routes (Pug rendered)
+  app.get('/', (_req, res) => res.render('index'));
+  app.get('/health', (_req, res) => res.render('health'));
+  app.get('/settings', (_req, res) => res.render('settings'));
+  app.get('/upload', (_req, res) => res.render('upload'));
+  app.get('/convert-markdown', (_req, res) => res.render('convert-markdown'));
+  app.get('/translate', (_req, res) => res.render('translate'));
+  app.get('/translation-fine-tune', (_req, res) => res.render('fine-tune'));
+  app.get('/compose', (_req, res) => res.render('compose'));
+  app.get('/epub', (_req, res) => res.render('epub'));
+  app.get('/mail', (_req, res) => res.render('mail'));
+  app.get('/orders', (_req, res) => res.render('orders'));
+  app.get('/third-parties', (_req, res) => res.render('third-parties'));
+  app.get('/search', (_req, res) => res.render('search'));
 
   app.use(errorHandler);
 

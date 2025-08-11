@@ -1,0 +1,71 @@
+extends layout
+
+block content
+  +back()
+  h1 Third Parties
+  .grid
+    .card
+      h3 Partners
+      form#partner-form
+        label Partner Name
+          input(name='name', required)
+        label Type
+          input(name='type', required)
+        label Endpoint
+          input(name='endpoint')
+        label Contact
+          input(name='contact')
+        button(type='submit') Add Partner
+      button#partners-refresh Refresh
+      table
+        thead
+          tr
+            th Partner ID
+            th Type
+            th Name
+            th Endpoint
+            th Contact
+            th Created
+        tbody#partners
+      h3 Bookshelf
+      form#shelf-form
+        label Title
+          input(name='title', required)
+        label Composed Markdown Path
+          input(name='composedMarkdownPath', required)
+        label EPUB Path
+          input(name='epubPath')
+        label Order ID
+          input(name='orderId')
+        button(type='submit') Add to Shelf
+      button#shelf-refresh Refresh
+      table
+        thead
+          tr
+            th ID
+            th Title
+            th Markdown
+            th EPUB
+            th Order
+            th Created
+        tbody#shelves
+    .card
+      h3 Shipments
+      form#ship-form
+        label Order ID
+          input(name='orderId', required)
+        label Partner ID
+          input(name='partnerId', required)
+        button(type='submit') Create Shipment
+      button#ships-refresh Refresh
+      table
+        thead
+          tr
+            th ID
+            th Order
+            th Partner
+            th Status
+            th Tracking
+            th Created
+        tbody#shipments
+  script(src='/assets/third-parties.js')

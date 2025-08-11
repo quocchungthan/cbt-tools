@@ -31,9 +31,11 @@ export async function readCsv(filePath: string, headers: string[]): Promise<CsvR
   });
 }
 
+
 export async function writeCsv(filePath: string, headers: string[], rows: CsvRow[]): Promise<void> {
-  const data: string[][] = [headers, ...rows.map(r => headers.map(h => r[h] ?? ''))];
-  const content = stringify(data, { header: false });
+  // Always quote the value field to avoid CSV parse errors with JSON
+  const data: string[][] = [headers, ...rows.map(r => headers.map(h => h === 'value' ? (typeof r[h] === 'string' ? r[h] : JSON.stringify(r[h])) : r[h] ?? ''))];
+  const content = stringify(data, { header: false, quoted: true, quoted_empty: true });
   await atomicWriteFile(filePath, content);
 }
 

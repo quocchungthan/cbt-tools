@@ -1,0 +1,34 @@
+extends layout
+
+block content
+  +back()
+  h1 Convert to EPUB
+  .card
+    form#create-form
+      label(for='inputMarkdownId') Input Markdown ID
+      select(name='inputMarkdownId' id='inputMarkdownId' required)
+        option(value='') Select markdown…
+      button(type='submit') Create Job
+      span#status
+  .card
+    h3 Jobs
+    button#refresh-jobs Refresh
+    table
+      thead
+        tr
+          th Job ID
+          th Input Markdown IDs
+          th Status
+          th Created
+      tbody#jobs
+  .card
+    h3 EPUBs
+    button#refresh-epubs Refresh
+    table
+      thead
+        tr
+          th Job ID
+          th Path
+          th Created
+      tbody#epubs
+  script(src='/assets/epub.js')

@@ -1,0 +1,200 @@
+.back-link {
+  padding: 18px 0 18px 0;
+  margin-bottom: 12px;
+  display: block;
+}
+.back-link a {
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 1.08em;
+  transition: color 0.2s;
+}
+.back-link a:hover, .back-link a:focus {
+  color: var(--primary-600);
+  text-decoration: underline;
+}
+:root {
+  --bg: #0f1117;
+  --panel: #111827;
+  --fg: #e5e7eb;
+  --muted: #9ca3af;
+  --primary: #7c3aed;
+  --primary-600: #6d28d9;
+  --border: #1f2937;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #ffffff;
+    --panel: #f8fafc;
+    --fg: #0f172a;
+    --muted: #475569;
+    --primary: #7c3aed;
+    --primary-600: #6d28d9;
+    --border: #e2e8f0;
+  }
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  margin: 0;
+}
+
+
+
+.layout {
+  display: flex;
+  height: 100vh;
+  min-height: 0;
+}
+
+.sidebar {
+  width: 220px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 32px 16px 16px 16px;
+  padding-top: 0;
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar h1 {
+  font-size: 1.4em;
+  margin-bottom: 24px;
+  color: var(--primary);
+}
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  flex-grow: 1;
+}
+.sidebar nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+.sidebar nav a:hover, .sidebar nav a:focus {
+  background: var(--primary);
+  color: #fff;
+}
+
+.main-content {
+  flex: 1;
+  padding: 32px 32px 32px 32px;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 12px;
+}
+
+button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--primary-600);
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+}
+button:disabled { opacity: .6; cursor: not-allowed; }
+
+input, select, textarea {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+label { display: grid; gap: 6px; margin: 8px 0; }
+
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--panel);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+th, td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  background: #181c2a;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 1em;
+}
+tr:last-child td {
+  border-bottom: none;
+}
+tr:hover td {
+  background: rgba(124,58,237,0.07);
+  transition: background 0.2s;
+}
+
+/* Card and container spacing */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 20px 20px 20px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 0;
+  padding-right: 40px;
+  padding-bottom: 0;
+  padding-left: 40px;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+  gap: 32px;
+}
+
+form, h3, h1, table, .card {
+  margin-bottom: 20px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.muted { color: var(--muted); }
+
+.theme-toggle {
+  margin-left: auto;
+}

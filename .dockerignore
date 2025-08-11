@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.github
+Dockerfile
+nginx.conf
+docker-compose.yml
+coverage
+public
+database

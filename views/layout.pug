@@ -1,0 +1,28 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    title CBT Tools
+    include _components.pug
+    link(rel='stylesheet', href='/assets/theme.css')
+  body
+    .layout
+      .sidebar
+        h1 CBT Tools
+        nav
+          a(href='/') Home
+          a(href='/health') Health
+          a(href='/settings') Settings
+          a(href='/upload') Upload
+          a(href='/convert-markdown') Convert Markdown
+          a(href='/translate') Translate
+          a(href='/translation-fine-tune') Fine-tune
+          a(href='/compose') Compose
+          a(href='/epub') EPUB
+          a(href='/mail') Mail
+          a(href='/orders') Orders
+          a(href='/third-parties') Third Parties
+          a(href='/search') API Search
+      .main-content
+        block content

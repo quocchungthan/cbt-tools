@@ -1,9 +1,14 @@
 import { Router } from 'express';
 import { z } from 'zod';
+
 import { v4 as uuidv4 } from 'uuid';
 import { validate } from '../middleware/validate';
 import { addTranslation, getTranslation, listSentences, listTranslations, initSentenceRows, upsertSentences } from '../services/dataservice/translateData';
+import { getMarkdownById } from '../services/dataservice/markdownsData';
+import { getUploadById } from '../services/dataservice/uploadsData';
+import { listJobs } from '../services/dataservice/convertMarkdownData';
 import { paginate } from '../lib/paging';
+import { getSettings } from '../services/dataservice/settingsData';
 
 export const translateRouter = Router();
 
@@ -69,14 +74,23 @@ export const translateRouter = Router();
  *       200:
  *         description: Updated
  */
-const postJob = z.object({
-  sourceMarkdownId: z.string(),
-  targetLang: z.enum(['en','vi']),
-  strategy: z.enum(['whole-file','sentence-by-sentence']),
-});
 
-translateRouter.post('/translate/jobs', validate({ body: postJob }), async (req, res, next) => {
+// Dynamic validation using user settings
+translateRouter.post('/translate/jobs', async (req, res, next) => {
   try {
+    const settings = await getSettings();
+    const langs = Array.isArray(settings.supportedLanguages) && settings.supportedLanguages.length > 0
+      ? settings.supportedLanguages
+      : ['en', 'vi'];
+    const strategies = Array.isArray(settings.translateStrategy) && settings.translateStrategy.length > 0
+      ? settings.translateStrategy
+      : ['whole-file', 'sentence-by-sentence'];
+    const postJob = z.object({
+      sourceMarkdownId: z.string(),
+      targetLang: z.enum(langs as [string, ...string[]]),
+      strategy: z.enum(strategies as [string, ...string[]]),
+    });
+    postJob.parse(req.body);
     const translationId = uuidv4();
     const job = { translationId, sourceMarkdownId: req.body.sourceMarkdownId, targetLang: req.body.targetLang, strategy: req.body.strategy, status: 'queued' as const, createdAt: new Date().toISOString() };
     await addTranslation(job);
@@ -90,7 +104,21 @@ translateRouter.post('/translate/jobs', validate({ body: postJob }), async (req,
 translateRouter.get('/translate/jobs', async (req, res, next) => {
   try {
     const all = await listTranslations();
-    const envelope = paginate(all, req.query as any, 'createdAt');
+    const convertJobs = await listJobs();
+    // For each translation, try to get the original filename
+    const jobsWithFilename = await Promise.all(all.map(async t => {
+      let originalFilename = '';
+      // Get markdown record by sourceMarkdownId
+      const job = await getMarkdownById(t.sourceMarkdownId);
+	  const findUploadId = convertJobs.find(j => j.jobId === job?.jobId)?.uploadId;
+      if (findUploadId) {
+        // Try to get upload record by markdownId (if markdownId is uploadId)
+        const upload = await getUploadById(findUploadId);
+        if (upload) originalFilename = upload.filename;
+      }
+      return { ...t, originalFilename };
+    }));
+    const envelope = paginate(jobsWithFilename, req.query as any, 'createdAt');
     res.json(envelope);
   } catch (e) { next(e); }
 });

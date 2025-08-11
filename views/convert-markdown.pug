@@ -1,0 +1,37 @@
+extends layout
+
+block content
+  +back()
+  h1 Convert Markdown
+  .card
+    form#create-form
+      label Upload ID
+        select(name='uploadId', id='uploadId', required)
+          option(value='') Select upload…
+      label Command
+        input(name='command', placeholder='optional')
+      button(type='submit') Create Job
+      span#status
+  .card
+    h3 Jobs
+    button#refresh-jobs Refresh
+    table
+      thead
+        tr
+          th Job ID
+          th Upload ID
+          th Command
+          th Status
+          th Created
+      tbody#jobs
+  .card
+    h3 Markdowns
+    table
+      thead
+        tr
+          th Job ID
+          th Markdown ID
+          th Path
+          th Created
+      tbody#markdowns
+  script(src='/assets/convert-markdown.js')

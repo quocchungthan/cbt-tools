@@ -1,0 +1,9 @@
+extends layout
+
+block content
+  +back()
+  h1 Health
+  .card
+    button#refresh Check Health
+    pre#output Loading…
+  script(src='/assets/health.js')

@@ -1,0 +1,30 @@
+mixin back(href='/')
+  .back-link
+    a(href=href) ← Back
+//- Common reusable components
+mixin field(label, name, type='text', placeholder='')
+  label
+    | #{label}
+    input(type=type, name=name, placeholder=placeholder)
+
+mixin select(label, name, options)
+  label
+    | #{label}
+    select(name=name)
+      each opt in options
+        option(value=opt) #{opt}
+
+mixin button(text, id='')
+  if id
+    button(id=id type='submit') #{text}
+  else
+    button(type='submit') #{text}
+
+mixin table(headers, bodyId)
+  table
+    thead
+      tr
+        each h in headers
+          th #{h}
+    tbody(id=bodyId)
+      //- rows injected by JS

@@ -1,0 +1,23 @@
+extends layout
+
+block content
+  +back()
+  h1 Settings
+  form#form
+    +field('File Supported (.ext)', 'fileSupported', 'text', '.pdf')
+    +field('OpenAI Key', 'openAiKey')
+    +field('OpenAI Model', 'openAiModel')
+    +field('OpenAI Project Id', 'openAiProjectId')
+    +field('OpenAI Org Id', 'openAiOrgId')
+    +field('Sheet API Key', 'sheetApiKey')
+    +field('Sheet Name', 'sheetName')
+    +field('Sheet Id', 'sheetId')
+    label Dropdown Options (JSON: { "formatOptions": ["pdf"], "supportedLanguages": ["en", "vi"], "translateStrategy": ["sentence-by-sentence", "full-book-at-once"] })
+      textarea(name='dropdownOptions' rows='6' placeholder='{ "formatOptions": ["pdf"], "supportedLanguages": ["en", "vi"], "translateStrategy": ["sentence-by-sentence", "full-book-at-once"] }')
+    .row
+      button#save(type='submit') Save
+      span#status.muted
+  .card
+    strong Raw
+    pre#raw
+  script(src='/assets/settings.js')

@@ -39,6 +39,7 @@ const putSchema = z.object({
   sheetApiKey: z.string().optional(),
   sheetName: z.string().optional(),
   sheetId: z.string().optional(),
+  dropdownOptions: z.record(z.string(), z.array(z.string())).optional(),
 });
 
 settingsRouter.put('/settings/', validate({ body: putSchema }), async (req, res, next) => {

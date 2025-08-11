@@ -1,0 +1,62 @@
+extends layout
+
+block content
+  +back()
+  h1 API-powered Search
+  .grid
+    .card
+      form#create-form
+        label Book Name
+          input(name='bookName')
+        label Order ID
+          input(name='orderId')
+        label Requested Langs
+          select(name='langs', multiple, size='2')
+            option(value='en') en
+            option(value='vi') vi
+        label Max Results
+          input(name='maxResults', type='number', min='1')
+        button(type='submit') Create Search
+        span#status
+      h3 Searches
+      button#refresh-searches Refresh
+      table
+        thead
+          tr
+            th Search ID
+            th Query
+            th Source
+            th Requested Langs
+            th Status
+            th Created
+        tbody#searches
+      h3 Results
+      form#results-load
+        input(name='searchId', placeholder='Search ID')
+        button(type='submit') Load Results
+      table
+        thead
+          tr
+            th Result ID
+            th Title
+            th URL
+            th File Type
+            th Language
+            th Free
+            th Price (¢)
+            th Rank
+            th Actions
+        tbody#results
+      h3 Downloads
+      button#refresh-downloads Refresh
+      table
+        thead
+          tr
+            th Download ID
+            th Result ID
+            th Filename
+            th Path
+            th Created
+            th File
+        tbody#downloads
+  script(src='/assets/search.js')

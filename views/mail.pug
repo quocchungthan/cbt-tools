@@ -1,0 +1,45 @@
+extends layout
+
+block content
+  +back()
+  h1 Send Mail
+  .card
+    form#create-form
+      label Email
+        input(name='email', required)
+      label(for='template') Template
+      select(name='template' id='template' required)
+        option(value='') Select template…
+        option(value='thank-you') thank-you
+        option(value='delay') delay
+        option(value='book-ready') book-ready
+      label(for='epubPath') EPUB Path
+      select(name='epubPath' id='epubPath')
+        option(value='') Select EPUB…
+      button(type='submit') Queue Mail
+      span#status
+  .card
+    h3 Jobs
+    button#refresh-jobs Refresh
+    table
+      thead
+        tr
+          th Job ID
+          th Email
+          th Template
+          th Status
+          th Created
+      tbody#jobs
+  .card
+    h3 Emails
+    form#emails-form
+      input(name='q', placeholder='Search email')
+      button(type='submit') Search
+    table
+      thead
+        tr
+          th Email
+          th Last Used
+          th Count
+      tbody#emails
+  script(src='/assets/mail.js')

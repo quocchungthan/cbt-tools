@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  +back()
+  h1 Translation Fine-tune
+  .card
+    form#load-form
+      label(for='translationId') Translation ID
+      select#translationId(name='translationId' required)
+        option(value='') Select translation…
+      button(type='submit') Load Sentences
+  .card
+    h3 Sentences
+    form#update-form(style='display:none;')
+      #sentences
+      button(type='submit') Save Updates
+      span#status
+  script(src='/assets/fine-tune.js')

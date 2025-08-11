@@ -1,0 +1,42 @@
+extends layout
+
+block content
+  +back()
+  h1 Compose
+  .card
+    form#create-form
+      label(for='inputMarkdownId1') Input Markdown ID 1 (required)
+      select(name='inputMarkdownId1' id='inputMarkdownId1' required)
+        option(value='') Select markdown…
+      label(for='inputMarkdownId2') Input Markdown ID 2 (optional)
+      select(name='inputMarkdownId2' id='inputMarkdownId2')
+        option(value='') None
+      label(for='format-select') Format
+      select(name='format' id='format-select' required)
+        option(value='') Select format…
+      button(type='submit') Create Compose Job
+      span#status
+  .card
+    h3 Jobs
+    button#refresh-jobs Refresh
+    table
+      thead
+        tr
+          th Job ID
+          th Inputs
+          th Format
+          th Status
+          th Output Path
+          th Created
+      tbody#jobs
+  .card
+    h3 Composed Markdown
+    button#refresh-md Refresh
+    table
+      thead
+        tr
+          th Job ID
+          th Path
+          th Created
+      tbody#markdowns
+  script(src='/assets/compose.js')
