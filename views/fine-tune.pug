@@ -1,0 +1,53 @@
+extends layout
+
+block content
+  a(href='/') ← Back
+  h1 Translation Fine-tune
+  .card
+    form#load-form
+      +field('Translation ID', 'translationId')
+      button(type='submit') Load Sentences
+  .card
+    h3 Sentences
+    form#update-form(style='display:none;')
+      #sentences
+      button(type='submit') Save Updates
+      span#status
+  script.
+    async function loadSentences(id) {
+      const res = await fetch(`/api/translation-fine-tune/${id}`);
+      if (!res.ok) { alert('Not found'); return; }
+      const data = await res.json();
+      const container = document.getElementById('sentences');
+      container.innerHTML = (data.items||[]).map(s => `
+        <div style='margin-bottom:.5rem;'>
+          <div><strong>${s.sentenceId}</strong> — ${s.originalText || ''}</div>
+          <textarea name="${s.sentenceId}" rows="2">${s.translatedText || ''}</textarea>
+        </div>
+      `).join('');
+      const form = document.getElementById('update-form');
+      form.style.display = 'block';
+      form.dataset.translationId = id;
+    }
+    document.getElementById('load-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = new FormData(e.target).get('translationId');
+      if (!id) return;
+      await loadSentences(id);
+    });
+    document.getElementById('update-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = e.target.dataset.translationId;
+      const fields = Array.from(e.target.querySelectorAll('textarea'));
+      const body = fields.map(f => ({ sentenceId: f.name, translatedText: f.value }));
+      document.getElementById('status').textContent = 'Saving…';
+      try {
+        const res = await fetch(`/api/translation-fine-tune/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error('Update failed');
+        await res.json();
+        document.getElementById('status').textContent = 'Saved';
+      } catch (err) {
+        document.getElementById('status').textContent = '';
+        alert(err.message || 'Error updating');
+      }
+    });

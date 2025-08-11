@@ -65,6 +65,7 @@ export function createApp() {
   app.get('/upload', (_req, res) => res.render('upload'));
   app.get('/convert-markdown', (_req, res) => res.render('convert-markdown'));
   app.get('/translate', (_req, res) => res.render('translate'));
+  app.get('/translation-fine-tune', (_req, res) => res.render('fine-tune'));
   app.get('/compose', (_req, res) => res.render('compose'));
   app.get('/epub', (_req, res) => res.render('epub'));
   app.get('/mail', (_req, res) => res.render('mail'));
