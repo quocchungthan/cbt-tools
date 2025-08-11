@@ -11,4 +11,5 @@ export type Settings = {
   formatOptions?: string[];
   supportedLanguages?: string[];
   translateStrategy?: string[];
+  composeFormats?: string[];
 };

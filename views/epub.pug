@@ -5,8 +5,9 @@ block content
   h1 Convert to EPUB
   .card
     form#create-form
-      label Input Markdown IDs (comma separated)
-        input(name='inputMarkdownIds', required)
+      label(for='inputMarkdownId') Input Markdown ID
+      select(name='inputMarkdownId' id='inputMarkdownId' required)
+        option(value='') Select markdown…
       button(type='submit') Create Job
       span#status
   .card

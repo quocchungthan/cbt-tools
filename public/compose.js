@@ -22,8 +22,18 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       const res = await fetch('/api/settings/');
       const data = await res.json();
-      const opts = data.dropdownOptions && data.dropdownOptions.formatOptions;
-      if (Array.isArray(opts) && opts.length) {
+      // Prefer composeFormats, fallback to formatOptions
+      let opts = [];
+      if (Array.isArray(data.composeFormats)) {
+        opts = data.composeFormats;
+      } else if (data.dropdownOptions && Array.isArray(data.dropdownOptions.composeFormats)) {
+        opts = data.dropdownOptions.composeFormats;
+      } else if (data.dropdownOptions && Array.isArray(data.dropdownOptions.formatOptions)) {
+        opts = data.dropdownOptions.formatOptions;
+      } else if (Array.isArray(data.formatOptions)) {
+        opts = data.formatOptions;
+      }
+      if (opts.length) {
         const sel = document.getElementById('format-select');
         sel.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
       }

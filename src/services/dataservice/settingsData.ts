@@ -40,6 +40,11 @@ export async function getSettings(): Promise<Settings> {
     if (result.dropdownOptions.formatOptions) result.formatOptions = result.dropdownOptions.formatOptions;
     if (result.dropdownOptions.supportedLanguages) result.supportedLanguages = result.dropdownOptions.supportedLanguages;
     if (result.dropdownOptions.translateStrategy) result.translateStrategy = result.dropdownOptions.translateStrategy;
+    if (result.dropdownOptions.composeFormats) result.composeFormats = result.dropdownOptions.composeFormats;
+  }
+  // Also allow root-level composeFormats
+  if (map.get('composeFormats')) {
+    try { result.composeFormats = JSON.parse(map.get('composeFormats') as string); } catch {}
   }
   return result;
 }
@@ -47,9 +52,20 @@ export async function getSettings(): Promise<Settings> {
 export async function saveSettings(input: Partial<Settings>): Promise<Settings> {
   const current = await getSettings();
   const next: Settings = { ...current, ...input };
+  // Ensure root-level keys are set if present in input or dropdownOptions
+  if (input.formatOptions) next.formatOptions = input.formatOptions;
+  if (input.supportedLanguages) next.supportedLanguages = input.supportedLanguages;
+  if (input.translateStrategy) next.translateStrategy = input.translateStrategy;
+  if (input.composeFormats) next.composeFormats = input.composeFormats;
+  if (input.dropdownOptions) {
+    if (input.dropdownOptions.formatOptions) next.formatOptions = input.dropdownOptions.formatOptions;
+    if (input.dropdownOptions.supportedLanguages) next.supportedLanguages = input.dropdownOptions.supportedLanguages;
+    if (input.dropdownOptions.translateStrategy) next.translateStrategy = input.dropdownOptions.translateStrategy;
+    if (input.dropdownOptions.composeFormats) next.composeFormats = input.dropdownOptions.composeFormats;
+  }
   const rows: Row[] = Object.entries(next)
     .filter((entry) => entry[1] !== undefined)
-    .map(([key, value]) => ({ key, value: key === 'dropdownOptions' ? JSON.stringify(value) : String(value) }));
+    .map(([key, value]) => ({ key, value: key === 'dropdownOptions' ? JSON.stringify(value) : Array.isArray(value) ? JSON.stringify(value) : String(value) }));
   await writeCsv(FILE, [...HEADERS], rows as any);
   return next;
 }

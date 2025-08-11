@@ -1,4 +1,22 @@
 document.addEventListener('DOMContentLoaded', function () {
+  // Populate EPUB dropdown
+  async function populateEpubDropdown() {
+    try {
+      const res = await fetch('/api/convert-to-epub/epubs');
+      const data = await res.json();
+      const items = data.items || [];
+      const sel = document.getElementById('epubPath');
+      if (sel) {
+        sel.innerHTML = '<option value="">Select EPUB…</option>';
+        for (const item of items) {
+          const opt = document.createElement('option');
+          opt.value = item.path;
+          opt.textContent = item.path;
+          sel.appendChild(opt);
+        }
+      }
+    } catch {}
+  }
   async function listJobs() {
     const res = await fetch('/api/send-mail/jobs');
     const data = await res.json();
@@ -10,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('emails').innerHTML = (data.items||[]).map(e => `<tr><td>${e.email}</td><td>${new Date(e.lastUsedAt).toLocaleString()}</td><td>${e.count}</td></tr>`).join('');
   }
   document.getElementById('refresh-jobs').addEventListener('click', listJobs);
+  populateEpubDropdown();
   document.getElementById('create-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);

@@ -1,12 +1,35 @@
 document.addEventListener('DOMContentLoaded', function () {
   async function applyDropdowns() {
+    // Populate markdown dropdown
     try {
-      const res = await fetch('/api/settings/');
-      const data = await res.json();
-      const opts = data.dropdownOptions && data.dropdownOptions.inputTypeOptions;
-      if (Array.isArray(opts) && opts.length) {
-        const sel = document.getElementById('input-type-select');
-        sel.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+      const [mdRes, jobsRes, uploadsRes] = await Promise.all([
+        fetch('/api/convert-markdown/markdowns'),
+        fetch('/api/convert-markdown/jobs'),
+        fetch('/api/upload')
+      ]);
+      const mdData = await mdRes.json();
+      const jobsData = await jobsRes.json();
+      const uploadsData = await uploadsRes.json();
+      const mdItems = mdData.items || [];
+      const jobs = jobsData.items || [];
+      const uploads = uploadsData.items || [];
+      const jobMap = {};
+      for (const job of jobs) jobMap[job.jobId] = job.uploadId;
+      const uploadMap = {};
+      for (const up of uploads) uploadMap[up.id] = up.filename;
+      const sel = document.getElementById('inputMarkdownId');
+      if (sel) {
+        sel.innerHTML = '<option value="">Select markdown…</option>';
+        for (const item of mdItems) {
+          const jobId = item.jobId;
+          const uploadId = jobMap[jobId];
+          const filename = uploadMap[uploadId];
+          const label = filename ? `${filename} (${item.markdownId || jobId})` : (item.markdownId || jobId);
+          const opt = document.createElement('option');
+          opt.value = item.markdownId || jobId;
+          opt.textContent = label;
+          sel.appendChild(opt);
+        }
       }
     } catch {}
   }
@@ -25,7 +48,11 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('create-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const body = { inputMarkdownIds: fd.get('inputMarkdownIds'), inputType: fd.get('inputType') };
+  // Get single selected markdown ID and send as array
+  const select = document.getElementById('inputMarkdownId');
+  const inputMarkdownId = select.value;
+  const inputMarkdownIds = inputMarkdownId ? [inputMarkdownId] : [];
+  const body = { inputMarkdownIds, inputType: fd.get('inputType') };
     document.getElementById('status').textContent = 'Creating…';
     try {
       const res = await fetch('/api/convert-to-epub/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
