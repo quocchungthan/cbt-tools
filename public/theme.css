@@ -33,9 +33,11 @@ body {
 }
 
 
+
 .layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 0;
 }
 
 .sidebar {
@@ -46,6 +48,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 .sidebar h1 {
   font-size: 1.4em;
@@ -75,6 +80,8 @@ body {
   flex: 1;
   padding: 32px 32px 32px 32px;
   min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .card {
