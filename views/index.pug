@@ -1,8 +1,39 @@
-extends layout
+
+extends home-layout
 
 block content
-  .card
-    h2 Welcome
-    p Use the navigation above to access features. Swagger docs at
-      | 
-      a(href='/api/docs', target='_blank', rel='noreferrer') /api/docs
+  // Hero Section
+  .home-hero
+    h1 Preorder Your Favorite Books
+    p.home-hero-desc Get early access to the best new books. Reserve your copy now!
+
+  // Preorder Form Section
+  .home-section#preorder-section
+    h2 Preorder Now
+    form#preorder-form(method='POST')
+      input(type='hidden', name='_csrf', value=csrfToken)
+      .form-row
+        label(for='preorder-email') Email
+        input#preorder-email(type='email', name='userEmail', required, placeholder='Enter your email')
+      .form-row
+        label(for='preorder-phone') Phone Number
+        input#preorder-phone(type='tel', name='phone', required, placeholder='Enter your phone number')
+      .form-row
+        label(for='preorder-book') Book Name
+        input#preorder-book(type='text', name='bookName', required, placeholder='Book name')
+      .form-row
+        label(for='preorder-author') Author
+        input#preorder-author(type='text', name='author', placeholder='Author')
+      button(type='submit').home-btn Preorder
+      span#preorder-status
+  // Sticky scroll-to-form button
+  button#scroll-to-preorder.home-sticky-btn(type='button') ↑
+
+  // Product List Section
+  .home-section
+    h2 Available Products
+    input#product-search(type='text', placeholder='Search products...', autocomplete='off')
+    .home-product-list#product-list
+    .home-pagination#pagination
+
+  script(src='/assets/preorder.js')

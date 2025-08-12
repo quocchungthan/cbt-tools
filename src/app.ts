@@ -1,5 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import pinoHttp from 'pino-http';
 import rateLimit from 'express-rate-limit';
@@ -8,6 +9,7 @@ import { healthRouter } from './routes/health';
 import { settingsRouter } from './routes/settings';
 import { uploadRouter } from './routes/upload';
 import { errorHandler } from './middleware/errorHandler';
+import { csrfProtection } from './middleware/csrf';
 import { mountSwagger } from './config/swagger';
 import { convertMarkdownRouter } from './routes/convertMarkdown';
 import { contentBreakdownRouter } from './routes/contentBreakdown';
@@ -24,6 +26,7 @@ export function createApp() {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
+  app.use(cookieParser());
   app.use(cors({ origin: (origin, cb) => {
     if (!origin) return cb(null, true);
     if (config.corsOrigins.length === 0 || config.corsOrigins.includes(origin)) return cb(null, true);
@@ -66,9 +69,12 @@ export function createApp() {
 
   app.use('/api', api);
 
-  // Frontend routes (Pug rendered)
-  app.get('/tools', (_req, res) => res.render('index'));
-  app.get('/tools/', (_req, res) => res.render('index'));
+  // CSRF protection for preorder ecommerce home page at root
+  app.get('/', csrfProtection, (req, res) => {
+    res.render('index', { csrfToken: req.csrfToken?.() });
+  });
+  // Restore /tools and /tools/ to previous welcome page
+  app.get(['/tools', '/tools/'], (_req, res) => res.render('tools-home'));
   app.get('/tools/health', (_req, res) => res.render('health'));
   app.get('/tools/settings', (_req, res) => res.render('settings'));
   app.get('/tools/upload', (_req, res) => res.render('upload'));

@@ -23,8 +23,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const res = await fetch('/api/order-management/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error('Create failed');
       await res.json();
-      document.getElementById('status').textContent = 'Created';
-      await listOrders();
+  document.getElementById('status').textContent = 'Created';
+  e.target.reset();
+  await listOrders();
     } catch (err) {
       document.getElementById('status').textContent = '';
       alert(err.message || 'Error creating');

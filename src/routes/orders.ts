@@ -63,7 +63,16 @@ export const ordersRouter = Router();
  *       404:
  *         description: Not found
  */
-const createBody = z.object({ bookName: z.string(), author: z.string(), format: z.string(), userEmail: z.string().email().optional(), originalFileId: z.string().optional(), translatedFileId: z.string().optional() });
+const createBody = z.object({
+  bookName: z.string(),
+  author: z.string(),
+  userEmail: z.string().email().optional(),
+  phone: z.string().min(6, 'Phone required'),
+  price: z.number().int().min(0).optional(),
+  image: z.string().url().optional(),
+  originalFileId: z.string().optional(),
+  translatedFileId: z.string().optional()
+});
 
 ordersRouter.get('/order-management/orders', async (req, res, next) => {
   try {
@@ -80,6 +89,8 @@ ordersRouter.get('/order-management/orders/:orderId', async (req, res, next) => 
     res.json(order);
   } catch (e) { next(e); }
 });
+
+
 
 ordersRouter.post('/order-management/orders', validate({ body: createBody }), async (req, res, next) => {
   try {
