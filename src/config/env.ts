@@ -15,6 +15,7 @@ export const config = {
   sheetId: process.env.SHEET_ID,
   dataDir: process.env.DATA_DIR || path.resolve(process.cwd(), 'database'),
   corsOrigins: (process.env.CORS_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean),
+  toolsPassword: process.env.TOOLS_PASSWORD,
 };
 
 export type AppConfig = typeof config;

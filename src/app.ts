@@ -22,6 +22,8 @@ import { thirdPartiesRouter } from './routes/thirdParties';
 import { apiSearchRouter } from './routes/apiPoweredSearch';
 import path from 'node:path';
 
+import { toolsPasswordProtect } from './middleware/toolsPasswordProtect';
+
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
@@ -73,7 +75,9 @@ export function createApp() {
   app.get('/', csrfProtection, (req, res) => {
     res.render('index', { csrfToken: req.csrfToken?.() });
   });
-  // Restore /tools and /tools/ to previous welcome page
+
+  // Password protection for all /tools routes
+  app.use('/tools', toolsPasswordProtect);
   app.get(['/tools', '/tools/'], (_req, res) => res.render('tools-home'));
   app.get('/tools/health', (_req, res) => res.render('health'));
   app.get('/tools/settings', (_req, res) => res.render('settings'));
