@@ -6,7 +6,7 @@ services:
     environment:
       - PORT=3000
       - PDF2MARKDOWN_BASE_URL=http://dc-pdf2markdown:3000
-      - TOOLS_PASSWORD={TOOLS_PASSWORD}
+      - TOOLS_PASSWORD=${TOOLS_PASSWORD}
     volumes:
       - database:/app/database
     expose:

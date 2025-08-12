@@ -24,7 +24,7 @@ export function toolsPasswordProtect(req: Request, res: Response, next: NextFunc
   // If not authorized, show a simple password form (for GET requests)
   if (req.method === 'GET') {
     res.status(401).send(`
-      <form method="POST" style="margin:2em auto;max-width:320px;text-align:center;">
+      <form method="GET" style="margin:2em auto;max-width:320px;text-align:center;">
         <h2>Tools Password Required</h2>
         <input type="password" name="password" placeholder="Password" style="width:100%;padding:8px;" autofocus />
         <button type="submit" style="margin-top:1em;padding:8px 16px;">Enter</button>
