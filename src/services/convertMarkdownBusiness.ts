@@ -30,7 +30,7 @@ export async function processConvertMarkdownJob(job: {
 
 		// Send to PDF2Markdown API
 		const fetch = (await import("node-fetch")).default;
-		const response = await fetch(`${pdf2markdownToolBaseUrl}/convert`, {
+		const response = await fetch(`${pdf2markdownToolBaseUrl}/api/convert`, {
 			method: "POST",
 			body: form,
 			headers: form.getHeaders(),
