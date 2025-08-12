@@ -7,5 +7,4 @@ Dockerfile
 nginx.conf
 docker-compose.yml
 coverage
-public
 database
