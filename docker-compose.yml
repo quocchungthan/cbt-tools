@@ -5,6 +5,7 @@ services:
     image: cbt-tools-node:latest
     environment:
       - PORT=3000
+      - PDF2MARKDOWN_BASE_URL=http://dc-pdf2markdown:3000
     volumes:
       - database:/app/database
     expose:
@@ -17,5 +18,17 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  dc-pdf2markdown:
+    build:
+      context: ./dc-pdf2markdown
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - STORAGE_ROOT=/temp/storage
+    volumes:
+      - ./storage:/temp/storage
 volumes:
   database: {}
