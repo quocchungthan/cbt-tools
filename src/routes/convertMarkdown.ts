@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'node:path';
-import { promises as fs } from 'node:fs';
 import { validate } from '../middleware/validate';
-import { addJob, getJob, listJobs, addMarkdownOutput, listMarkdownOutputs } from '../services/dataservice/convertMarkdownData';
+import { addJob, getJob, listJobs, listMarkdownOutputs } from '../services/dataservice/convertMarkdownData';
 import { paginate } from '../lib/paging';
+import { pdf2markdownToolBaseUrl } from '../services/convertMarkdownBusiness';
+
 
 export const convertMarkdownRouter = Router();
 
@@ -24,6 +24,32 @@ export const convertMarkdownRouter = Router();
  *     responses:
  *       200:
  *         description: List
+ * /convert-markdown/ping:
+ *   get:
+ *     tags: [convert-markdown]
+ *     summary: Health check for PDF2Markdown service
+ *     description: Forwards to the PDF2Markdown tool's /ping endpoint and returns the exact response.
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
+ *       503:
+ *         description: Service is starting or unavailable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: starting
  * /convert-markdown/jobs/{jobId}:
  *   get:
  *     tags: [convert-markdown]
@@ -58,14 +84,29 @@ convertMarkdownRouter.post('/convert-markdown/jobs', validate({ body: postSchema
     const jobId = uuidv4();
     const job = { jobId, uploadId: req.body.uploadId, command: req.body.command, status: 'queued' as const, progress: 0, createdAt: new Date().toISOString() };
     await addJob(job);
-    // Stub processing: create a markdown output file
-    const markdownId = uuidv4();
-    const dir = path.join('database', 'markdown', jobId);
-    await fs.mkdir(dir, { recursive: true });
-    const outputPath = path.join(dir, 'output.md');
-    await fs.writeFile(outputPath, `# Converted from upload ${req.body.uploadId} at ${new Date().toISOString()}\n`);
-    await addMarkdownOutput({ jobId, markdownId, path: outputPath, createdAt: new Date().toISOString() });
     res.status(201).json(job);
+
+    // Async processing: delegate to business service
+    import('../services/convertMarkdownBusiness').then(({ processConvertMarkdownJob }) => {
+      processConvertMarkdownJob({ jobId, uploadId: req.body.uploadId, command: req.body.command });
+    });
+  } catch (e) { next(e); }
+});
+
+// Ping route to forward to PDF2Markdown tool
+convertMarkdownRouter.get('/convert-markdown/ping', async (req, res, next) => {
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(`${pdf2markdownToolBaseUrl}/ping`);
+    const contentType = response.headers.get('content-type') || '';
+    res.status(response.status);
+    if (contentType.includes('application/json')) {
+      const data = await response.json();
+      res.json(data);
+    } else {
+      const text = await response.text();
+      res.type(contentType).send(text);
+    }
   } catch (e) { next(e); }
 });
 

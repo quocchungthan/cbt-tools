@@ -5,19 +5,20 @@ block content
   h1 Send Mail
   .card
     form#create-form
-      label Email
-        input(name='email', required)
-      label(for='template') Template
-      select(name='template' id='template' required)
-        option(value='') Select template…
-        option(value='thank-you') thank-you
-        option(value='delay') delay
-        option(value='book-ready') book-ready
-      label(for='epubPath') EPUB Path
-      select(name='epubPath' id='epubPath')
-        option(value='') Select EPUB…
-      button(type='submit') Queue Mail
-      span#status
+      .form-controls
+        label Email
+          input(name='email', required)
+        label(for='template') Template
+        select(name='template' id='template' required)
+          option(value='') Select template…
+          option(value='thank-you') thank-you
+          option(value='delay') delay
+          option(value='book-ready') book-ready
+        label(for='epubPath') EPUB Path
+        select(name='epubPath' id='epubPath')
+          option(value='') Select EPUB…
+        button(type='submit') Queue Mail
+        span#status
   .card
     h3 Jobs
     button#refresh-jobs Refresh

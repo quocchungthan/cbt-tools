@@ -6,18 +6,19 @@ block content
   .grid
     .card
       form#create-form
-        label Book Name
-          input(name='bookName')
-        label Order ID
-          input(name='orderId')
-        label Requested Langs
-          select(name='langs', multiple, size='2')
-            option(value='en') en
-            option(value='vi') vi
-        label Max Results
-          input(name='maxResults', type='number', min='1')
-        button(type='submit') Create Search
-        span#status
+        .form-controls
+          label Book Name
+            input(name='bookName')
+          label Order ID
+            input(name='orderId')
+          label Requested Langs
+            select(name='langs', multiple, size='2')
+              option(value='en') en
+              option(value='vi') vi
+          label Max Results
+            input(name='maxResults', type='number', min='1')
+          button(type='submit') Create Search
+          span#status
       h3 Searches
       button#refresh-searches Refresh
       table
@@ -32,7 +33,7 @@ block content
         tbody#searches
       h3 Results
       form#results-load
-        input(name='searchId', placeholder='Search ID')
+        input(name='searchId', placeholder='Search ID' style='margin-right: 20px')
         button(type='submit') Load Results
       table
         thead

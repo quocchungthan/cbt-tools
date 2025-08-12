@@ -7,7 +7,7 @@ describe('Frontend routes (Pug)', () => {
   it('GET / renders home', async () => {
     const res = await request(app).get('/');
     expect(res.status).toBe(200);
-    expect(res.text).toMatch(/CBT Tools/);
+    expect(res.text).toMatch(/Em iu TiengViet/);
     expect(res.text).toMatch(/Swagger/);
   });
 

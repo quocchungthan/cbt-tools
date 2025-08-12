@@ -28,6 +28,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - STORAGE_ROOT=/temp/storage
+      - DISABLE_JOB_SCANNER=true
     volumes:
       - ./storage:/temp/storage
 volumes:

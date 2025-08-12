@@ -5,10 +5,11 @@ block content
   h1 Translation Fine-tune
   .card
     form#load-form
-      label(for='translationId') Translation ID
-      select#translationId(name='translationId' required)
-        option(value='') Select translation…
-      button(type='submit') Load Sentences
+      .form-controls
+        label(for='translationId') Translation ID
+        select#translationId(name='translationId' required)
+          option(value='') Select translation…
+        button(type='submit') Load Sentences
   .card
     h3 Sentences
     form#update-form(style='display:none;')

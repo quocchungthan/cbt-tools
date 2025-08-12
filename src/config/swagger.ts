@@ -4,7 +4,7 @@ import swaggerUi from 'swagger-ui-express';
 
 const definition: any = {
   openapi: '3.0.0',
-  info: { title: 'CBT Tools API', version: '1.0.0' },
+  info: { title: 'Em iu TiengViet Tools API', version: '1.0.0' },
   servers: [{ url: '/api' }],
   tags: [
     { name: 'health' },
