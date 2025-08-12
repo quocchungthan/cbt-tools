@@ -2,7 +2,6 @@ import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import pinoHttp from 'pino-http';
 import rateLimit from 'express-rate-limit';
 import { config } from './config/env';
 import { healthRouter } from './routes/health';
@@ -36,7 +35,6 @@ export function createApp() {
   }}));
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
-  app.use(pinoHttp());
 
   // View engine: Pug
   app.set('views', path.resolve(process.cwd(), 'views'));
